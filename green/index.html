@@ -51,7 +51,7 @@ th{background:#f4f5f7}
 <header>
   <img id="logo" alt="טיקטין">
   <h1>מילוי אוטומטי של תקן ירוק לבנייני מגורים</h1>
-  <span class="ver">גרסה 1.1 · עודכן 14.11.2026</span>
+  <span class="ver">גרסה 1.2 · עודכן 14.11.2026</span>
 </header>
 <div class="bar">
   <button class="btn primary" id="fill" title="ממלא את הטופס שנטען וחותם עליו">מילוי הטופס</button>
@@ -406,7 +406,8 @@ async function loadFile(f){
   if (!f) return; srcName = f.name; srcBytes = new Uint8Array(await f.arrayBuffer()); $('fname').textContent = 'נטען: ' + f.name; await analyze();
 }
 const drop = $('drop');
-drop.onclick = () => $('file').click();
+drop.onclick = e => { if (e.target.tagName !== 'INPUT') $('file').click(); };
+['file','stampFile'].forEach(id => $(id).addEventListener('click', e => e.stopPropagation()));
 $('file').onchange = e => { loadFile(e.target.files[0]); e.target.value = ''; };
 drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); };
 drop.ondragleave = () => drop.classList.remove('over');
@@ -422,7 +423,7 @@ $('dl').onclick = async () => { if (!outBytes) return;
 $('stampBtn').onclick = () => $('stampFile').click();
 $('stampFile').onchange = e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { stampData = r.result; store.set('tiktin-green-stamp', stampData); paintStamp(); flash('החותמת נטענה ונשמרה בדפדפן הזה בלבד.'); }; r.readAsDataURL(f); e.target.value = ''; };
 $('reset').onclick = () => { srcBytes = null; srcName = ''; analysis = null; $('fname').textContent = ''; $('statusCard').hidden = true; clearOut(); defaults(); };
-window.__green = { loadBytes: async (b, n) => { srcName = n; srcBytes = b; await analyze(); }, fill, setStamp: d => { stampData = d; paintStamp(); }, out: () => outBytes };
+window.__green = { loadBytes: async (b, n) => { srcName = n; srcBytes = b; await analyze(); }, fill, setStamp: (d, keep) => { stampData = d; if (keep) store.set('tiktin-green-stamp', d); paintStamp(); }, out: () => outBytes };
 </script>
 </body>
 </html>
