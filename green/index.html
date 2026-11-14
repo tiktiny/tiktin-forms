@@ -51,7 +51,7 @@ th{background:#f4f5f7}
 <header>
   <img id="logo" alt="טיקטין">
   <h1>מילוי אוטומטי של תקן ירוק לבנייני מגורים</h1>
-  <span class="ver">גרסה 1.0 · עודכן 14.11.2026</span>
+  <span class="ver">גרסה 1.1 · עודכן 14.11.2026</span>
 </header>
 <div class="bar">
   <button class="btn primary" id="fill" title="ממלא את הטופס שנטען וחותם עליו">מילוי הטופס</button>
@@ -117,7 +117,7 @@ let srcBytes = null, srcName = '', analysis = null, outBytes = null, stampData =
 function today(){ const d = new Date(); const p = n => String(n).padStart(2,'0'); return p(d.getDate()) + '.' + p(d.getMonth()+1) + '.' + d.getFullYear(); }
 function defaults(){
   $('project').value = ''; $('tender').value = ''; $('ts').value = 'in'; $('date').value = today();
-  $('signer').value = 'יובל טיקטין'; $('company').value = 'טיקטין תכנון חשמל (2003) בע"מ'; $('hp').value = '';
+  $('signer').value = 'יובל טיקטין'; $('company').value = 'טיקטין תכנון חשמל (2003) בע"מ'; $('hp').value = '513475392';
   paintStamp();
 }
 function paintStamp(){ $('stampState').value = stampData ? 'חותמת נטענה ושמורה בדפדפן הזה' : 'לא נטענה חותמת – לחץ "טעינת חותמת"'; }
