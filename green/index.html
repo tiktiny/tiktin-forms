@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>מילוי אוטומטי של תקן ירוק לבנייני מגורים</title>
+<style>
+:root{--red:#c8202f;--ink:#1f2328;--muted:#5f6670;--line:#d5d9de;--bg:#f4f5f7;--ok:#1d7a3a;color-scheme:light}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Arial,sans-serif;font-size:15px;direction:rtl}
+header{background:#fff;border-bottom:3px solid var(--red);display:flex;align-items:center;gap:12px;padding:8px 14px;position:sticky;top:0;z-index:20;flex-wrap:wrap}
+header img{height:44px}
+header h1{font-size:18px;margin:0;flex:1;min-width:220px}
+.ver{font-size:12px;color:var(--muted);white-space:nowrap}
+.bar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;background:#fff;border-bottom:1px solid var(--line);padding:6px 14px}
+.btn{height:36px;padding:0 12px;border:1px solid var(--line);background:#fff;border-radius:8px;font:inherit;cursor:pointer;color:var(--ink);white-space:nowrap}
+.btn:hover{border-color:#8a929c}
+.btn.primary{background:var(--red);border-color:var(--red);color:#fff;font-weight:600}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+#zoomwrap{transform-origin:top right}
+main{padding:12px 14px;display:flex;flex-direction:column;gap:12px}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.card h2{font-size:15px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 12px;align-items:end}
+@media(max-width:900px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.grid{grid-template-columns:1fr}}
+.f{display:flex;flex-direction:column;gap:4px;min-width:0}
+.f label{font-size:13px;color:var(--muted);height:18px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.inp{position:relative;height:38px}
+.inp input,.inp select{width:100%;height:38px;border:1px solid #b9c0c8;border-radius:8px;background:#fff;color:var(--ink);font:inherit;padding:0 10px 0 30px}
+.inp .x{position:absolute;left:4px;top:5px;width:24px;height:28px;border:0;background:transparent;color:#8a929c;cursor:pointer;font-size:15px}
+.drop{border:2px dashed #b9c0c8;border-radius:10px;background:#fff;padding:14px;text-align:center;cursor:pointer}
+.drop.over{border-color:var(--red);background:#fff6f6}
+.msg{border-radius:8px;padding:10px 12px;line-height:1.6}
+.msg.ok{background:#e6f5ea;border:1px solid #9bd0a9}
+.msg.err{background:#fde8ea;border:1px solid #f0a4ab}
+.msg.info{background:#eef3fb;border:1px solid #b8c9e6}
+details{font-size:13.5px;color:var(--muted)} details summary{cursor:pointer;color:var(--ink)}
+.offices{display:flex;gap:6px;flex-wrap:wrap}
+.offices span{background:#eef3fb;border:1px solid #b8c9e6;border-radius:999px;padding:2px 10px;font-size:13px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+td,th{border:1px solid var(--line);padding:4px 8px;text-align:right}
+th{background:#f4f5f7}
+.yes{color:var(--ok);font-weight:700}.no{color:var(--red);font-weight:700}
+#preview{display:flex;flex-direction:column;align-items:center;gap:10px}
+#preview canvas{max-width:100%;border:1px solid var(--line);box-shadow:0 2px 8px rgba(0,0,0,.08);background:#fff}
+.small{font-size:12.5px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <img id="logo" alt="טיקטין">
+  <h1>מילוי אוטומטי של תקן ירוק לבנייני מגורים</h1>
+  <span class="ver">גרסה 1.0 · עודכן 14.11.2026</span>
+</header>
+<div class="bar">
+  <button class="btn primary" id="fill" title="ממלא את הטופס שנטען וחותם עליו">מילוי הטופס</button>
+  <button class="btn" id="dl" disabled title="הורדת הטופס הממולא כקובץ PDF">הורדת PDF</button>
+  <button class="btn" id="stampBtn" title="טעינת תמונת החתימה והחותמת מהמחשב (נשמרת רק בדפדפן הזה)">טעינת חותמת</button>
+  <button class="btn" id="reset" title="איפוס כל השדות והטופס שנטען">איפוס טופס</button>
+  <span style="flex:1"></span>
+  <button class="btn" id="zout" title="הקטנת התצוגה">−</button>
+  <button class="btn" id="zin" title="הגדלת התצוגה">+</button>
+  <button class="btn" id="zfit" title="התאמת התצוגה לרוחב המסך">התאמה למסך</button>
+  <button class="btn" id="zsave" title="שמירת גודל התצוגה לטופס הזה במחשב הזה">שמירת גודל טופס במסך</button>
+</div>
+<div id="zoomwrap">
+<main>
+  <div class="card">
+    <h2>1. הטופס שהתקבל מיועץ הבנייה הירוקה</h2>
+    <div class="drop" id="drop">גרור לכאן את קובץ ה-PDF של הצהרת החשמל, או לחץ לבחירת קובץ<div class="small" id="fname"></div></div>
+    <input type="file" id="file" accept="application/pdf" hidden>
+    <input type="file" id="stampFile" accept="image/png,image/jpeg" hidden>
+    <div style="margin-top:10px"><span class="small">משרדי ייעוץ נתמכים (בנייני מגורים בלבד):</span>
+      <div class="offices" id="offices"></div></div>
+    <details style="margin-top:8px"><summary>הסבר</summary>
+      האפליקציה מזהה את משרד הייעוץ לפי הטופס, בודקת שהטופס זהה לנוסח המוכר, ומסמנת את הסעיפים לפי הכללים הקבועים של המשרד. טופס של משרד שאינו ברשימה, טופס שאינו למגורים, או טופס שהנוסח שלו השתנה – לא ימולא, ותוצג הודעה מתאימה. הקובץ והחותמת נשארים במחשב שלך ואינם נשלחים לשום מקום.
+    </details>
+  </div>
+  <div class="card">
+    <h2>2. פרטי הפרויקט והחותם</h2>
+    <div class="grid">
+      <div class="f"><label>שם הפרויקט</label><div class="inp"><input id="project" autocomplete="off"><button class="x" tabindex="-1" title="ניקוי">✕</button></div></div>
+      <div class="f"><label>מכרז מדינה / דיור להשכרה</label><div class="inp"><select id="tender"><option value="">בחר…</option><option value="no">לא</option><option value="yes">כן</option></select></div></div>
+      <div class="f"><label>תחנת שנאים של חברת החשמל</label><div class="inp"><select id="ts"><option value="in">בתוך תחום המגרש</option><option value="out">מחוץ לתחום המגרש</option></select></div></div>
+      <div class="f"><label>תאריך</label><div class="inp"><input id="date" autocomplete="off"><button class="x" tabindex="-1" title="ניקוי">✕</button></div></div>
+      <div class="f"><label>שם החותם</label><div class="inp"><input id="signer" autocomplete="off"><button class="x" tabindex="-1" title="ניקוי">✕</button></div></div>
+      <div class="f"><label>שם החברה</label><div class="inp"><input id="company" autocomplete="off"><button class="x" tabindex="-1" title="ניקוי">✕</button></div></div>
+      <div class="f"><label>ח.פ. של החברה</label><div class="inp"><input id="hp" autocomplete="off" inputmode="numeric"><button class="x" tabindex="-1" title="ניקוי">✕</button></div></div>
+      <div class="f"><label>חותמת וחתימה</label><div class="inp"><input id="stampState" readonly tabindex="-1"></div></div>
+    </div>
+    <details style="margin-top:8px"><summary>הסבר</summary>
+      "מכרז מדינה / דיור להשכרה" קובע את הסעיף של מונה חזותי דיגיטלי בדירה: מסומן "כן" רק בפרויקטים כאלה. "תחנת שנאים" נדרש רק בטופס של KVS. ח.פ. נדרש רק בטופס של AVIV. שם הפרויקט נכתב רק אם היועץ לא מילא אותו בטופס.
+    </details>
+  </div>
+  <div class="card" id="statusCard" hidden><h2>3. תוצאה</h2><div id="status"></div><div id="rows" style="margin-top:10px"></div></div>
+  <div class="card" id="prevCard" hidden><h2>4. הטופס הממולא – לבדיקה לפני שליחה</h2><div id="preview"></div></div>
+</main>
+</div>
+<script src="pdf-lib.min.js"></script>
+<script src="fontkit.umd.min.js"></script>
+<script src="font.js"></script>
+<script src="logo.js"></script>
+<script src="templates.js"></script>
+<script type="module">
+import * as pdfjsLib from './pdf.min.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.min.mjs';
+const $ = id => document.getElementById(id);
+const RED = PDFLib.rgb(0.8, 0, 0);
+const OFFICES = ['גולד הנדסה', 'ESD – פיתוח סביבה וקיימות', 'KVS – קיימות ושפ"ע', 'EVERGREEN', 'AVIV', 'WAWA'];
+$('logo').src = window.TIKTIN_LOGO;
+$('offices').innerHTML = OFFICES.map(o => '<span>' + o + '</span>').join('');
+const store = { get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }, set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }, del(k){ try{ localStorage.removeItem(k); }catch(e){} } };
+let srcBytes = null, srcName = '', analysis = null, outBytes = null, stampData = store.get('tiktin-green-stamp');
+
+/* ---------- טופס: ברירות מחדל, ניקוי, החלפה בהקלדה ---------- */
+function today(){ const d = new Date(); const p = n => String(n).padStart(2,'0'); return p(d.getDate()) + '.' + p(d.getMonth()+1) + '.' + d.getFullYear(); }
+function defaults(){
+  $('project').value = ''; $('tender').value = ''; $('ts').value = 'in'; $('date').value = today();
+  $('signer').value = 'יובל טיקטין'; $('company').value = 'טיקטין תכנון חשמל (2003) בע"מ'; $('hp').value = '';
+  paintStamp();
+}
+function paintStamp(){ $('stampState').value = stampData ? 'חותמת נטענה ושמורה בדפדפן הזה' : 'לא נטענה חותמת – לחץ "טעינת חותמת"'; }
+document.querySelectorAll('.inp .x').forEach(b => b.onclick = () => { const i = b.parentElement.querySelector('input'); i.value = ''; i.focus(); });
+document.querySelectorAll('.inp input:not([readonly])').forEach(i => i.addEventListener('focus', () => setTimeout(() => i.select(), 0)));
+defaults();
+
+/* ---------- זום פנימי ---------- */
+let zoom = parseFloat(store.get('tiktin-green-zoom')) || 1;
+function applyZoom(){ const w = $('zoomwrap'); w.style.transform = 'scale(' + zoom + ')'; w.style.width = (100/zoom) + '%'; }
+$('zin').onclick = () => { zoom = Math.min(2, zoom + 0.1); applyZoom(); };
+$('zout').onclick = () => { zoom = Math.max(0.5, zoom - 0.1); applyZoom(); };
+$('zfit').onclick = () => { zoom = 1; applyZoom(); };
+$('zsave').onclick = () => { store.set('tiktin-green-zoom', String(zoom)); flash('גודל התצוגה נשמר למחשב הזה.'); };
+applyZoom();
+
+/* ---------- הודעות ---------- */
+function show(kind, html){ $('statusCard').hidden = false; $('status').innerHTML = '<div class="msg ' + kind + '">' + html + '</div>'; }
+function flash(t){ show('info', t); }
+function clearOut(){ outBytes = null; $('dl').disabled = true; $('prevCard').hidden = true; $('preview').innerHTML = ''; $('rows').innerHTML = ''; }
+
+/* ---------- קריאת ה-PDF ---------- */
+async function readPdf(bytes){
+  const doc = await pdfjsLib.getDocument({ data: bytes.slice(), verbosity: 0 }).promise;
+  const pages = [];
+  for (let i = 1; i <= doc.numPages; i++){
+    const page = await doc.getPage(i); const vp = page.getViewport({ scale: 1 });
+    const tc = await page.getTextContent(); const annots = await page.getAnnotations();
+    const items = tc.items.map(it => { const t = it.str.trim(); return { t, x: it.transform[4], y: vp.height - it.transform[5], w: it.width, h: it.height || 10,
+      box: t.length > 0 && [...t].every(c => c.codePointAt(0) >= 0xF000) }; }).filter(it => it.t.length);
+    pages.push({ page, W: vp.width, H: vp.height, rot: page.rotate, items, annots });
+  }
+  return { doc, pages, text: pages.map(p => p.items.map(i => i.t).join(' ')).join(' ') };
+}
+async function pixels(pg){
+  if (pg.px) return pg.px;
+  const S = 3, vp = pg.page.getViewport({ scale: S }); const c = document.createElement('canvas'); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+  const ctx = c.getContext('2d', { willReadFrequently: true }); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+  await pg.page.render({ canvasContext: ctx, viewport: vp }).promise;
+  pg.px = { S, w: c.width, h: c.height, data: ctx.getImageData(0, 0, c.width, c.height).data };
+  return pg.px;
+}
+async function boxCenter(pg, b){
+  const px = await pixels(pg), S = px.S; let x0 = 1e9, x1 = -1, y0 = 1e9, y1 = -1;
+  const ax = Math.max(0, Math.floor(b.x * S)), bx = Math.min(px.w - 1, Math.ceil((b.x + b.w) * S));
+  const ay = Math.max(0, Math.floor((b.y - b.h * 0.8) * S)), by = Math.min(px.h - 1, Math.ceil((b.y + b.h * 0.2) * S));
+  for (let y = ay; y <= by; y++) for (let x = ax; x <= bx; x++){ const k = (y * px.w + x) * 4; if (px.data[k] + px.data[k+1] + px.data[k+2] < 384){ if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
+  if (x1 < 0) return null;
+  return { x: (x0 + x1) / 2 / S, y: (y0 + y1) / 2 / S, s: (x1 - x0) / S };
+}
+
+/* ---------- זיהוי המשרד ---------- */
+function detect(pdf){
+  const T = pdf.text;
+  if (T.replace(/\s/g, '').length < 200) return { err: 'בקובץ הזה אין טקסט שאפשר לקרוא (כנראה טופס סרוק). האפליקציה ממלאת רק את קובץ ה-PDF המקורי שהיועץ שלח.' };
+  if (T.includes('מוסדות חינוך')) return { err: 'זה טופס למוסדות חינוך (מבנה ציבור). האפליקציה ממלאת טפסים של בנייני מגורים בלבד – הטופס לא מולא.' };
+  let key = null; const N = T.replace(/\s/g, '');
+  if (N.includes('KVS')) key = 'kvs';
+  else if (N.includes('EVERGREEN')) key = 'evergreen';
+  else if (N.includes('התכנות') && N.includes('עמידה') && N.includes('5281')) key = 'aviv';
+  else if (N.includes('הנחיותליישוםבתכנון')) key = 'wawa';
+  else if (N.includes('הצהרותיועץחשמלותאורה')) key = 'esd';
+  else if (N.includes('במסגרתהסמכתהפרויקטלעמידהבדרישות')) key = 'gold';
+  else if (N.includes('הצהרותמגוריםלתקןבניהירוקה')) return { err: 'זה טופס של "לשם שפר איכות סביבה". המשרד הזה עדיין לא נתמך באפליקציה – הטופס לא מולא.' };
+  if (!key) return { err: 'לא זוהה משרד ייעוץ נתמך בטופס הזה – הטופס לא מולא.<br>המשרדים הנתמכים: ' + OFFICES.join(', ') + '.' };
+  if (key === 'gold'){
+    if (!pdf.pages[0].items.some(i => i.t === 'חשמל' && i.y < 70)) return { err: 'זה טופס של גולד הנדסה, אבל לא הצהרת החשמל (כנראה הצהרה של יועץ אחר) – הטופס לא מולא.' };
+    if (!T.includes('מגורים')) return { err: 'זה טופס של גולד הנדסה שאינו למגורים. האפליקציה ממלאת טפסים של בנייני מגורים בלבד – הטופס לא מולא.' };
+  }
+  if (pdf.pages.some(p => p.rot)) return { err: 'הטופס מסובב ואינו במבנה המוכר – הטופס לא מולא.', office: key };
+  return { key };
+}
+const NAMES = { gold: 'גולד הנדסה', esd: 'ESD – פיתוח סביבה וקיימות', kvs: 'KVS – קיימות ושפ"ע', evergreen: 'EVERGREEN', aviv: 'AVIV', wawa: 'WAWA' };
+const CHANGED = name => 'הטופס זוהה כטופס של ' + name + ', אבל הנוסח שלו שונה מהנוסח שהאפליקציה מכירה. כדי לא לסמן סעיף במקום הלא נכון – הטופס לא מולא. יש למלא אותו ידנית ולעדכן את האפליקציה בנוסח החדש.';
+
+/* ---------- טפסים במבנה קבוע (WAWA / KVS / EVERGREEN / AVIV) ---------- */
+function verifyStatic(pdf, tpl){
+  if (pdf.pages.length !== tpl.pages) return false;
+  for (let i = 0; i < tpl.pages; i++) if (Math.abs(pdf.pages[i].W - tpl.sizes[i][0]) > 2 || Math.abs(pdf.pages[i].H - tpl.sizes[i][1]) > 2) return false;
+  let hit = 0;
+  for (const [p, x, y, t] of tpl.anchors) if (pdf.pages[p].items.some(i => i.t === t && Math.abs(i.x - x) <= 2.5 && Math.abs(i.y - y) <= 2.5)) hit++;;
+  return hit / tpl.anchors.length >= 0.985;
+}
+const SUMMARY = {
+  wawa: [['נצילות ויעילות אורית (80.5% / 69 לומן לוואט)', 1], ['שליטה בתאורת פנים – 80%', 1], ['אזורי הדלקה בחניונים – 80%', 1], ['כיבוי אוטומטי של תאורת חוץ', 1], ['טיימר לדוד חשמלי', 1], ['מנייה בשטחים משותפים', 1], ['זווית הארה', 1], ['גוון האור', 1], ['רמות הארה', 1], ['אחידות הארה', 1]],
+  kvs: [['1.1 גישה מרשמית + שיפור 15%', 1], ['2.1 כיבוי אוטומטי ב-80% מהשטחים המשותפים', 1], ['2.2 תאורת חניונים – 50% וגם 80%', 1], ['2.3 תאורת חוץ', 1], ['2.4 מפסק מרכזי בדירה', 0], ['1.2.2 מים חמים', 1], ['1.2.6 מונה חזותי בדירה', 'tender'], ['1.2.6 מנייה של 2 מערכות בדירה', 0], ['1.2.6 מנייה בשטחים משותפים (תאורת חוץ, מעליות, משאבות)', 1], ['בקרה ביחידות הדיור / בשטחים משותפים', 0], ['2.4 זווית הארה וגוון', 1], ['7.1 טעינת רכב חשמלי', 1], ['5.6 רמות הארה ואחידות', 1]],
+  evergreen: [['כל 11 ההתחייבויות (1.2.1, 1.2.2, 1.2.6, 2.4, 5.6, 7.1.2)', 1]],
+  aviv: [['1.1 גישה מרשמית + שיפור 15%', 1], ['1.2 גישה תפקודית', 0], ['2.1 תאורת פנים – 40% וגם 80%', 1], ['2.2 חניונים – 50% וגם 80%', 1], ['2.3 תאורת חוץ', 1], ['2.4 מפסק מרכזי', 0], ['1.2.2 מים חמים', 1], ['1.2.3 אנרגיה מתחדשת', 0], ['1.2.6 מונה חזותי בדירה', 'tender'], ['1.2.6 מנייה של 2 מערכות בדירה', 0], ['1.2.6 מנייה בשטחים משותפים', 1], ['בקרה ביחידות הדיור / בשטחים משותפים', 0], ['2.4 זווית הארה וגוון', 1], ['5.6 רמות הארה ואחידות', 1], ['7.1 טעינת רכב חשמלי', 1]]
+};
+
+/* ---------- טפסים עם משבצות כן/לא (גולד הנדסה / ESD) ---------- */
+const RULES = { presc: ['גישה מרשמית – 70% / 60 לומן לוואט', 1], impr15: ['שיפור 15%', 1], func10: ['גישה תפקודית – 10%', 0], func20: ['גישה תפקודית – 20%', 0], int40: ['תאורת פנים – 40% מהשטחים המשותפים', 1], int80: ['תאורת פנים – 80% מהשטחים המשותפים', 1], park50: ['תאורת חניונים – 50%', 1], park80: ['תאורת חניונים – 80%', 1], ext: ['כיבוי אוטומטי של תאורת חוץ', 1], central: ['מפסק מרכזי בדירה / כרטיס חכם', 0], timer: ['ניהול מים חמים (טיימר)', 1], storage: ['מערכת אגירת קור / חום / חשמל', 0], meter: ['מונה חזותי דיגיטלי בדירה', 'tender'], apt2: ['מנייה של 2 מערכות בכל יחידת דיור', 0], common: ['מנייה בשטחים המשותפים', 1], ctl50: ['בקרה ב-50% מיחידות הדיור', 0], ctl100: ['בקרה ב-100% מיחידות הדיור', 0], ctl75: ['בקרה ב-75% מהשטחים המשותפים', 0], angle: ['זווית הארה', 1], hue: ['גוון האור', 1], levels: ['רמות הארה (תנאי סף)', 1], unif: ['אחידות הארה', 1], ev: ['טעינת רכב חשמלי', 1] };
+const CORE = ['presc','impr15','func10','func20','int40','int80','park50','park80','ext','central','timer','meter','apt2','common','ctl50','ctl100','ctl75','angle','hue','levels','unif'];
+function classify(T){
+  const has = s => T.includes(s), pc = n => new RegExp('(^|[^0-9.])' + n + '\\s*%|%\\s*' + n + '([^0-9]|$)').test(T), num = n => new RegExp('(^|[^0-9.])' + n + '([^0-9%]|$)').test(T);
+  if (has('מונה') && has('חזותי')) return 'meter';
+  if ((has('מפסק') && has('מרכזי')) || has('כרטיס חכם')) return 'central';
+  if (has('טעינ')) return 'ev';
+  if (has('החמים') || has('מים חמים')) return 'timer';
+  if (pc(70) && num(60)) return 'presc';
+  if (pc(15) && has('שיפור')) return 'impr15';
+  if (pc(30) || pc(15)) return 'storage';
+  if (pc(75)) return 'ctl75';
+  if (pc(100)) return 'ctl100';
+  if (pc(50) && has('הדיור')) return 'ctl50';
+  if (pc(50) && has('המואר')) return 'park50';
+  if (pc(80) && has('המואר')) return 'park80';
+  if (pc(40)) return 'int40';
+  if (pc(80)) return 'int80';
+  if (pc(10)) return 'func10';
+  if (pc(20)) return 'func20';
+  if (has('חוץ') && has('כיבוי')) return 'ext';
+  if (has('משותפים') && (has('מדידה') || has('מנייה') || has('מניה'))) return 'common';
+  if (has('מערכות') && (has('יחידת') || has('יח"ד'))) return 'apt2';
+  if (num(82)) return 'angle';
+  if (has('קלווין')) return 'hue';
+  if (has('אחידות')) return 'unif';
+  if (has('12464') || has('רמות')) return 'levels';
+  return null;
+}
+async function planTable(pdf, key, a){
+  const marks = [], rows = [], seen = {};
+  for (let pi = 0; pi < pdf.pages.length; pi++){
+    const pg = pdf.pages[pi];
+    const yes = pg.items.filter(i => i.t === 'כן' && i.x < 260).sort((p, q) => p.y - q.y);
+    for (let r = 0; r < yes.length; r++){
+      const Y = yes[r], no = pg.items.find(i => i.t === 'לא' && Math.abs(i.y - Y.y) < 3 && i.x < Y.x);
+      const boxes = pg.items.filter(i => i.box && Math.abs(i.y - Y.y) < 4 && i.x < Y.x + 40);
+      const gap = (w, b) => Math.max(b.x - (w.x + w.w), w.x - (b.x + b.w), 0);
+      const yb = boxes.slice().sort((p, q) => gap(Y, p) - gap(Y, q))[0];
+      const nb = no ? boxes.filter(b => b !== yb).sort((p, q) => gap(no, p) - gap(no, q))[0] : null;
+      if (!yb || gap(Y, yb) > 12 || (no && (!nb || gap(no, nb) > 12))) return { changed: true, why: 1 };
+      const top = Math.max(Y.y - 42, r ? (yes[r-1].y + Y.y) / 2 : -1e9), bot = Math.min(Y.y + 42, r < yes.length - 1 ? (yes[r+1].y + Y.y) / 2 : 1e9);
+      const T = pg.items.filter(i => i.y > top && i.y <= bot && i.x > Y.x + Y.w + 10 && !i.box).map(i => i.t).join(' ');
+      const k = classify(T); if (!k) return { changed: true, why: 2, T: T };
+      seen[k] = (seen[k] || 0) + 1;
+      let ans = RULES[k][1]; if (ans === 'tender') ans = a.tender ? 1 : 0;
+      const target = ans ? yb : nb; if (!target) return { changed: true, why: 3 };
+      const c = await boxCenter(pg, target); if (!c || c.s < 4 || c.s > 16) return { changed: true, why: 4, T: JSON.stringify([c, target]) };
+      marks.push({ t: 'check', p: pi, x: c.x, y: c.y, h: c.s * 0.32 });
+      rows.push([RULES[k][0], ans]);
+    }
+  }
+  const need = key === 'esd' ? CORE.concat(['ev', 'storage']) : CORE;
+  for (const k of need) if (!seen[k]) return { changed: true, why: 5, T: k + ' ' + JSON.stringify(seen) };
+  for (const k in seen) if (seen[k] > (k === 'storage' ? 2 : 1)) return { changed: true, why: 6, T: k + ' ' + JSON.stringify(seen) };
+  return { marks, rows };
+}
+function goldFields(pdf, a, marks){
+  const LAB = { 'החותם': 'שם החותם', 'וחותמת': 'חתימה וחותמת', 'תאריך': 'תאריך', 'חברה': 'שם חברה' };
+  let pagesSigned = 0;
+  pdf.pages.forEach((pg, pi) => {
+    const f = {};
+    for (const it of pg.items) if (it.y > 550){ const n = (it.t.match(/\./g) || []).length; if (n < 10) continue;
+      for (const l in LAB) if (it.t.includes(l)) f[LAB[l]] = { x0: it.x + 2, x1: it.x + n * 0.25 * it.h - 2, y: it.y }; }
+    if (Object.keys(f).length !== 4) return;
+    pagesSigned++;
+    const mid = r => (r.x0 + r.x1) / 2;
+    marks.push({ t: 'text', p: pi, v: 'signer', y: f['שם החותם'].y - 3.8, size: 10, xc: mid(f['שם החותם']), maxw: f['שם החותם'].x1 - f['שם החותם'].x0 });
+    marks.push({ t: 'text', p: pi, v: 'company', y: f['שם חברה'].y - 3.8, size: 10, xc: mid(f['שם חברה']), maxw: f['שם חברה'].x1 - f['שם חברה'].x0 });
+    marks.push({ t: 'text', p: pi, v: 'date', y: f['תאריך'].y - 3.8, size: 10, xc: mid(f['תאריך']), maxw: f['תאריך'].x1 - f['תאריך'].x0 });
+    const s = f['חתימה וחותמת']; marks.push({ t: 'stamp', p: pi, r: [s.x1 - 108, s.y - 43, s.x1 - 2, s.y + 3] });
+    const pr = pg.items.find(i => i.t.includes('פרויקט') && i.y < 100);
+    const filled = pg.annots.some(an => an.rect && (pg.H - an.rect[3]) < 110);
+    if (pr && !filled && a.project){ const xr = pr.t.includes('...') ? pr.x + pr.w - 40 : pr.x - 6; marks.push({ t: 'text', p: pi, v: 'project', y: pr.y - 3.3, size: 10, xr: xr - 8, maxw: 300 }); }
+    if (pr && !filled && !a.project) marks.needProject = true;
+  });
+  return pagesSigned === pdf.pages.length;
+}
+function esdFields(pdf, a, marks){
+  let strips = 0;
+  pdf.pages.forEach((pg, pi) => {
+    const l1 = {}; for (const it of pg.items) if (it.t.includes('מצהירה')) l1[Math.round(it.y)] = 1;
+    for (const ys of Object.keys(l1)){
+      const y = +ys, l2 = pg.items.find(i => i.t.includes('חתימה') && i.t.includes('__') && i.y > y + 8 && i.y < y + 40);
+      if (!l2 || !pg.items.some(i => i.t.includes('תאריך') && i.t.includes('__') && Math.abs(i.y - l2.y) < 3)) continue;
+      const dt = { x: 308, y: l2.y };
+      strips++;
+      marks.push({ t: 'text', p: pi, v: 'company', y: y - 2.5, size: 8, xc: 453.5, maxw: 103 });
+      marks.push({ t: 'text', p: pi, v: 'project', y: y - 2.5, size: 8, xc: 266.5, maxw: 113 });
+      marks.push({ t: 'stamp', p: pi, r: [405, l2.y - 31, 495, l2.y + 4] });
+      marks.push({ t: 'text', p: pi, v: 'date', y: dt.y - 2.5, size: 8, xc: dt.x + 28, maxw: 56 });
+    }
+  });
+  return strips === 7;
+}
+
+async function kvsPage0(pdf, marks){
+  const pg = pdf.pages[0], bx = pg.items.filter(i => i.box).sort((p, q) => p.x - q.x), ul = pg.items.filter(i => /^_{8,}$/.test(i.t)).sort((p, q) => p.y - q.y);
+  if (bx.length !== 2 || Math.abs(bx[0].y - bx[1].y) > 3 || ul.length !== 2) return false;
+  const lab = b => pg.items.filter(i => !i.box && Math.abs(i.y - b.y) < 12 && i.x < b.x && i.x > b.x - 130).map(i => i.t).join(' ');
+  if (!lab(bx[0]).includes('בתוך') || !lab(bx[1]).includes('מחוץ')) return false;
+  const cin = await boxCenter(pg, bx[0]), cout = await boxCenter(pg, bx[1]); if (!cin || !cout) return false;
+  marks.push({ t: 'check', p: 0, x: cin.x, y: cin.y, h: 3, when: 'tsInside' }, { t: 'check', p: 0, x: cout.x, y: cout.y, h: 3, when: 'tsOutside' });
+  marks.push({ t: 'text', p: 0, v: 'signerCompany', y: ul[0].y - 2.5, size: 8, xr: ul[0].x + ul[0].w - 2, maxw: ul[0].w - 4 });
+  marks.push({ t: 'stamp', p: 0, r: [ul[1].x + ul[1].w / 2 - 45, ul[1].y - 36, ul[1].x + ul[1].w / 2 + 45, ul[1].y + 2] });
+  return true;
+}
+
+/* ---------- ניתוח הטופס ---------- */
+function answers(){ return { project: $('project').value.trim(), tender: $('tender').value === 'yes', tenderSet: $('tender').value !== '', tsIn: $('ts').value === 'in', date: $('date').value.trim(), signer: $('signer').value.trim(), company: $('company').value.trim(), hp: $('hp').value.trim() }; }
+async function analyze(){
+  clearOut(); analysis = null;
+  let pdf; try { pdf = await readPdf(srcBytes); } catch (e) { show('err', 'הקובץ אינו קובץ PDF תקין או שהוא מוגן – הטופס לא מולא.'); return; }
+  const d = detect(pdf);
+  if (d.err){ show('err', d.err); return; }
+  if (['wawa','kvs','evergreen','aviv'].includes(d.key) && !verifyStatic(pdf, window.GREEN_TEMPLATES[d.key])){ show('err', CHANGED(NAMES[d.key])); return; }
+  analysis = { pdf, key: d.key };
+  show('ok', 'זוהה טופס של <b>' + NAMES[d.key] + '</b> לבניין מגורים, ' + (pdf.pages.length === 1 ? 'עמוד אחד' : pdf.pages.length + ' עמודים') + '. השלם את פרטי הפרויקט ולחץ "מילוי הטופס".');
+}
+
+/* ---------- כתיבה ל-PDF ---------- */
+function visual(s){
+  if (!/[\u0590-\u05FF]/.test(s)) return s;
+  const flip = { '(': ')', ')': '(', '[': ']', ']': '[' };
+  let r = [...s].reverse().map(c => flip[c] || c).join('');
+  r = r.replace(/[A-Za-z0-9][A-Za-z0-9.,:\/\-]*[A-Za-z0-9]|[A-Za-z0-9]/g, m => [...m].reverse().join(''));
+  return [...r].reverse().join('');   /* הגופן הופך בעצמו מחרוזת עברית */
+}
+async function build(marks, a){
+  const out = await PDFLib.PDFDocument.load(srcBytes); out.registerFontkit(window.fontkit);
+  const fontBytes = Uint8Array.from(atob(window.HEB_FONT_B64), c => c.charCodeAt(0));
+  const font = await out.embedFont(fontBytes, { subset: false });
+  const bin = Uint8Array.from(atob(stampData.split(',')[1]), c => c.charCodeAt(0));
+  const img = stampData.startsWith('data:image/png') ? await out.embedPng(bin) : await out.embedJpg(bin);
+  const pages = out.getPages();
+  const val = { signer: a.signer, company: a.company, date: a.date, project: a.project, signerCompany: a.signer + ', ' + a.company, hp: 'ח.פ. ' + a.hp };
+  const cond = { always: true, tender: a.tender, notTender: !a.tender, tsInside: a.tsIn, tsOutside: !a.tsIn };
+  for (const m of marks){
+    if (m.when && !cond[m.when]) continue;
+    const pg = pages[m.p], H = pg.getHeight();
+    if (m.t === 'check'){
+      const h = m.h, P = [[m.x - h, m.y], [m.x - h * 0.25, m.y + h * 0.8], [m.x + h * 1.05, m.y - h * 0.95]];
+      for (let i = 0; i < 2; i++) pg.drawLine({ start: { x: P[i][0], y: H - P[i][1] }, end: { x: P[i+1][0], y: H - P[i+1][1] }, thickness: Math.max(1, h * 0.54), color: RED, lineCap: PDFLib.LineCapStyle.Round });
+    } else if (m.t === 'text'){
+      const txt = visual(val[m.v] || ''); if (!txt) continue;
+      let size = m.size; while (m.maxw && font.widthOfTextAtSize(txt, size) > m.maxw && size > 5) size -= 0.5;
+      const w = font.widthOfTextAtSize(txt, size), x = m.xc != null ? m.xc - w / 2 : m.xr - w;
+      pg.drawText(txt, { x, y: H - m.y, size, font, color: RED });
+    } else if (m.t === 'stamp'){
+      const [x0, y0, x1, y1] = m.r, k = Math.min((x1 - x0) / img.width, (y1 - y0) / img.height), w = img.width * k, h = img.height * k;
+      pg.drawImage(img, { x: (x0 + x1) / 2 - w / 2, y: H - y1 + ((y1 - y0) - h) / 2, width: w, height: h });
+    }
+  }
+  return await out.save();
+}
+async function preview(bytes){
+  const doc = await pdfjsLib.getDocument({ data: bytes.slice(), verbosity: 0, disableFontFace: true }).promise; const box = $('preview'); box.innerHTML = '';
+  for (let i = 1; i <= doc.numPages; i++){ const p = await doc.getPage(i), vp = p.getViewport({ scale: 1.5 }); const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height; box.appendChild(c); await p.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise; }
+  $('prevCard').hidden = false;
+}
+async function fill(){
+  clearOut();
+  if (!srcBytes){ show('err', 'עוד לא נטען טופס. גרור קובץ PDF לתיבה שלמעלה.'); return; }
+  if (!analysis){ await analyze(); if (!analysis) return; }
+  const a = answers(), key = analysis.key, pdf = analysis.pdf, miss = [];
+  if (!stampData) miss.push('לא נטענה חותמת – לחץ "טעינת חותמת" ובחר את קובץ התמונה של החתימה והחותמת');
+  if (!a.tenderSet) miss.push('בחר אם הפרויקט הוא מכרז מדינה / דיור להשכרה');
+  if (!a.signer) miss.push('חסר שם החותם'); if (!a.company) miss.push('חסר שם החברה');
+  if (!/^\d{2}\.\d{2}\.\d{4}$/.test(a.date)) miss.push('התאריך צריך להיות בתבנית DD.MM.YYYY');
+  if (key === 'aviv' && !/^\d{9}$/.test(a.hp)) miss.push('בטופס של AVIV נדרש ח.פ. של החברה (9 ספרות)');
+  if (key === 'esd' && !a.project) miss.push('בטופס של ESD נדרש שם הפרויקט');
+  let marks, rows;
+  if (key === 'gold' || key === 'esd'){
+    const pl = await planTable(pdf, key, a);
+    if (pl.changed){ show('err', CHANGED(NAMES[key])); return; }
+    marks = pl.marks; rows = pl.rows;
+    const ok = key === 'gold' ? goldFields(pdf, a, marks) : esdFields(pdf, a, marks);
+    if (!ok){ show('err', CHANGED(NAMES[key])); return; }
+    if (marks.needProject) miss.push('שם הפרויקט ריק בטופס – מלא את השדה "שם הפרויקט"');
+  } else {
+    marks = window.GREEN_TEMPLATES[key].marks.slice();
+    if (key === 'kvs' && !(await kvsPage0(pdf, marks))){ show('err', CHANGED(NAMES[key])); return; }
+    rows = SUMMARY[key].map(([l, v]) => [l, v === 'tender' ? (a.tender ? 1 : 0) : v]);
+  }
+  if (miss.length){ show('err', 'לפני המילוי צריך להשלים:<br>• ' + miss.join('<br>• ')); return; }
+  try { outBytes = await build(marks, a); } catch (e) { show('err', 'המילוי נכשל: ' + (e && e.message || e) + ' – הטופס לא מולא.'); return; }
+  show('ok', 'הטופס של <b>' + NAMES[key] + '</b> מולא ונחתם. בדוק את התצוגה למטה לפני שליחה ליועץ, ואז לחץ "הורדת PDF".');
+  $('rows').innerHTML = '<table><tr><th>סעיף</th><th>סימון</th></tr>' + rows.map(([l, v]) => '<tr><td>' + l + '</td><td class="' + (v ? 'yes">כן' : 'no">לא') + '</td></tr>').join('') + '</table>';
+  $('dl').disabled = false;
+  await preview(outBytes);
+}
+
+/* ---------- אירועים ---------- */
+async function loadFile(f){
+  if (!f) return; srcName = f.name; srcBytes = new Uint8Array(await f.arrayBuffer()); $('fname').textContent = 'נטען: ' + f.name; await analyze();
+}
+const drop = $('drop');
+drop.onclick = () => $('file').click();
+$('file').onchange = e => { loadFile(e.target.files[0]); e.target.value = ''; };
+drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); };
+drop.ondragleave = () => drop.classList.remove('over');
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove('over'); loadFile(e.dataTransfer.files[0]); };
+$('fill').onclick = fill;
+$('dl').onclick = async () => { if (!outBytes) return;
+  const fname = 'הצהרת חשמל - ' + ($('project').value.trim() || srcName.replace(/\.pdf$/i, '')) + ' - חתומה.pdf';
+  const blob = new Blob([outBytes], { type: 'application/pdf' });
+  if (window.claude && typeof window.claude.use === 'function') {   // תצוגה בתוך Claude – שמירה דרך מנגנון ההורדות שלו
+    try { const d = await window.claude.use('downloads'); if (d) { await d.save({ filename: fname, data: blob }); return; } } catch (e) { if (e && e.code === 'declined') return; }
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fname; document.body.appendChild(a); a.click(); a.remove(); };
+$('stampBtn').onclick = () => $('stampFile').click();
+$('stampFile').onchange = e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { stampData = r.result; store.set('tiktin-green-stamp', stampData); paintStamp(); flash('החותמת נטענה ונשמרה בדפדפן הזה בלבד.'); }; r.readAsDataURL(f); e.target.value = ''; };
+$('reset').onclick = () => { srcBytes = null; srcName = ''; analysis = null; $('fname').textContent = ''; $('statusCard').hidden = true; clearOut(); defaults(); };
+window.__green = { loadBytes: async (b, n) => { srcName = n; srcBytes = b; await analyze(); }, fill, setStamp: d => { stampData = d; paintStamp(); }, out: () => outBytes };
+</script>
+</body>
+</html>
