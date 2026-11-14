@@ -1,0 +1,146 @@
+<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>פתיחת פרויקט – טופס למילוי היזם – טיקטין</title>
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--red:#C8102E;--ink:#222;--muted:#5f6670;--line:#d5d9de;--bg:#f4f5f7;color-scheme:light}
+*{box-sizing:border-box} body{margin:0;font-family:"Rubik","Segoe UI",Arial,"Noto Sans Hebrew",sans-serif;color:var(--ink);background:var(--bg);font-size:16px;line-height:1.5}
+header{background:#fff;border-bottom:2px solid var(--red);display:flex;align-items:center;gap:14px;padding:8px 16px;flex-wrap:wrap}
+header img{height:40px} header h1{font-size:19px;font-weight:600;margin:0;flex:1 1 300px} header .ver{color:var(--muted);font-size:13px;white-space:nowrap}
+main{max-width:1100px;margin:0 auto;padding:16px}
+.intro{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin-bottom:12px}
+.intro b{color:var(--red)}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:12px}
+.card h2{font-size:17px;color:var(--red);margin:0 0 10px;border-bottom:2px solid var(--red);padding-bottom:4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px 16px;align-items:end}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:500}
+.inp{position:relative;display:flex}
+.inp input,.inp textarea{width:100%;height:40px;border:1px solid #b9bfc6;border-radius:8px;background:#fff;color:var(--ink);font:inherit;padding:0 10px 0 34px}
+.inp textarea{height:76px;padding:8px 10px 8px 34px;resize:vertical}
+.inp input:focus,.inp textarea:focus{outline:2px solid var(--red);outline-offset:0;border-color:var(--red)}
+.inp .x{position:absolute;left:6px;top:8px;width:24px;height:24px;border:0;border-radius:50%;background:#eef0f2;color:#555;font-size:14px;line-height:24px;cursor:pointer;padding:0}
+.inp .x:hover{background:#ffe1e4;color:var(--red)}
+.chk{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:6px 16px}
+.chk label,.dec label{display:flex;gap:8px;align-items:flex-start;padding:4px 0;cursor:pointer}
+input[type=checkbox],input[type=radio]{width:18px;height:18px;margin-top:3px;flex:none;accent-color:var(--red)}
+.dec{border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:8px 0}
+.dec>b{display:block;margin-bottom:2px}
+.dec .other{display:flex;gap:8px;align-items:center;flex-wrap:wrap} .dec .other .inp{flex:1 1 260px}
+.sub{color:var(--muted);font-size:13px}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0 28px}
+.btn{height:44px;border:0;border-radius:8px;background:var(--red);color:#fff;font:inherit;font-size:16px;font-weight:500;padding:0 20px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:#a31724} .btn.sec{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:400} .btn.sec:hover{background:var(--bg)}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#1f2328;color:#fff;padding:12px 18px;border-radius:10px;font-size:15px;z-index:50;max-width:92vw;box-shadow:0 6px 20px rgba(0,0,0,.25)} #toast[hidden]{display:none}
+footer{text-align:center;color:var(--muted);font-size:13px;padding:10px 0 24px}
+@media (max-width:760px){header h1{font-size:16px} .chk{grid-template-columns:1fr} .btn{flex:1 1 100%;justify-content:center}}
+body.view .x,body.view .eonly,body.view #sendBtn{display:none!important} body:not(.view) .vonly{display:none!important} body.view input,body.view textarea{pointer-events:none} body.view .intro{background:#FDF1F1;border-color:#f2c4c8}
+@media print{.bar,#toast,.x{display:none!important} body{background:#fff} .card,.intro{break-inside:avoid}}
+</style></head><body>
+<header><img src="data:image/png;base64,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" alt="טיקטין תכנון חשמל"><h1>פתיחת פרויקט – טופס למילוי היזם<span id="pname"></span></h1><span class="ver">גרסה 1 · עודכן 14.11.2026</span></header>
+<main>
+<div class="intro" id="intro">ממלאים את הפרטים, ההחלטות ומה כבר הועבר, ולוחצים למטה על <b>שליחת התשובות לטיקטין</b>. ייפתח אצלכם מייל מוכן עם כל התשובות – נשאר רק ללחוץ "שלח". אפשר לחזור לדף ולהשלים – מה שמילאתם נשמר במחשב הזה.</div>
+
+<section class="card"><h2>1. פרטי היזם לפתיחת הזמנות בחברת החשמל</h2><div class="grid">
+<label class="f">שם החברה המלא, כפי שרשום ברשם החברות<span class="inp"><input data-k="company" data-l="שם החברה"></span></label>
+<label class="f">מספר החברה (ח.פ.)<span class="inp"><input data-k="hp" data-l="ח.פ." inputmode="numeric"></span></label>
+</div></section>
+
+<section class="card"><h2>2. איש הקשר מטעם החברה</h2><div class="grid">
+<label class="f">שם מלא<span class="inp"><input data-k="cname" data-l="שם"></span></label>
+<label class="f">תפקיד<span class="inp"><input data-k="crole" data-l="תפקיד"></span></label>
+<label class="f">טלפון נייד<span class="inp"><input data-k="cmob" data-l="נייד" inputmode="tel"></span></label>
+<label class="f">טלפון משרדי<span class="inp"><input data-k="ctel" data-l="טלפון משרדי" inputmode="tel"></span></label>
+<label class="f">דוא״ל<span class="inp"><input data-k="cmail" data-l="דוא״ל" type="email" dir="ltr"></span></label>
+<label class="f">כתובת משרד<span class="inp"><input data-k="caddr" data-l="כתובת משרד"></span></label>
+</div></section>
+
+<section class="card"><h2>3. מה כבר הועבר לטיקטין <span class="sub">(לסמן מה שהועבר)</span></h2><div class="chk">
+<label><input type="checkbox" data-k="d_land" data-l="תצהיר בעל חטיבת קרקע – חתום ומאומת עו״ד"> תצהיר בעל חטיבת קרקע – חתום ומאומת עו״ד</label>
+<label><input type="checkbox" data-k="d_poa" data-l="ייפוי כוח לטיקטין – חתום ומאומת עו״ד"> ייפוי כוח לטיקטין – חתום ומאומת עו״ד</label>
+<label><input type="checkbox" data-k="d_infra" data-l="רישום בתשתיות לאומיות וצירוף אורנה מטיקטין"> רישום בתשתיות לאומיות וצירוף אורנה מטיקטין</label>
+<label><input type="checkbox" data-k="d_survey" data-l="תוכנית מדידה (PDF + DWG)"> תוכנית מדידה (PDF + DWG בקואורדינטות)</label>
+<label><input type="checkbox" data-k="d_arch" data-l="תוכניות אדריכלות (PDF)"> תוכניות אדריכלות עדכניות (PDF)</label>
+<label><input type="checkbox" data-k="d_site" data-l="תוכנית העמדה / פיתוח (DWG + PDF)"> תוכנית העמדה / פיתוח (DWG + PDF)</label>
+<label><input type="checkbox" data-k="d_mix" data-l="תמהיל דירות"> תמהיל דירות לפי בניינים / כניסות</label>
+<label><input type="checkbox" data-k="d_park" data-l="שטחי חניונים וכמות חניות"> שטחי חניונים וכמות חניות</label>
+<label><input type="checkbox" data-k="d_com" data-l="שטחי מסחר"> שטחי מסחר (אם יש)</label>
+<label><input type="checkbox" data-k="d_pub" data-l="שטחי ציבור"> שטחי ציבור (אם יש)</label>
+</div>
+<div class="dec"><b>מסמכי חברה</b>
+<label><input type="radio" name="reg" data-k="reg" value="החברה רשומה במחשבי חברת החשמל – אין צורך" data-l="מסמכי חברה"> החברה כבר רשומה במחשבי חברת החשמל – אין צורך במסמכים</label>
+<label><input type="radio" name="reg" data-k="reg" value="החברה אינה רשומה – מסמכי החברה הועברו" data-l="מסמכי חברה"> החברה אינה רשומה – מסמכי החברה הועברו</label>
+<label><input type="radio" name="reg" data-k="reg" value="לא ידוע" data-l="מסמכי חברה"> לא ידוע</label></div>
+</section>
+
+<section class="card"><h2>4. החלטות היזם</h2>
+<div class="dec"><b>4.1 גודל חיבור לדירות</b>
+<label><input type="radio" name="d1" data-k="d1" value="מאשרים: עד 120 מ״ר – 3X25 אמפר; מעל 120 מ״ר – 3X40 אמפר" data-l="4.1 גודל חיבור לדירות"> מאשרים: דירות עד 120 מ״ר – 3X25 אמפר; מעל 120 מ״ר – 3X40 אמפר</label>
+<div class="other"><label><input type="radio" name="d1" data-k="d1" value="__o" data-l="4.1 גודל חיבור לדירות"> הנחיית יזם אחרת:</label><span class="inp"><input data-k="d1o" data-for="d1"></span></div></div>
+<div class="dec"><b>4.2 דירות מיוחדות (פנטהאוז, דירות גן וכד׳)</b>
+<label><input type="radio" name="d2" data-k="d2" value="לפי הכלל בסעיף 4.1" data-l="4.2 דירות מיוחדות"> לפי הכלל בסעיף 4.1</label>
+<div class="other"><label><input type="radio" name="d2" data-k="d2" value="__o" data-l="4.2 דירות מיוחדות"> חיבור גדול יותר – גודל ולאילו דירות:</label><span class="inp"><input data-k="d2o" data-for="d2"></span></div></div>
+<div class="dec"><b>4.3 מיקום המונים עבור הדירות</b>
+<label><input type="radio" name="d3" data-k="d3" value="מאשרים: מעל 100 יח״ד – מונים בקומות; עד 100 יח״ד – חדר ריכוז מונים במרתף" data-l="4.3 מיקום המונים"> מאשרים את הפתרון המקובל: בבניין מעל 100 יח״ד – מונים בקומות; עד 100 יח״ד – חדר ריכוז מונים במרתף</label>
+<div class="other"><label><input type="radio" name="d3" data-k="d3" value="__o" data-l="4.3 מיקום המונים"> העדפת יזם אחרת:</label><span class="inp"><input data-k="d3o" data-for="d3"></span></div></div>
+<div class="dec"><b>4.4 מסחר – שיווק הנכסים / אופן החיבור לחברת החשמל</b>
+<label><input type="radio" name="d4" data-k="d4" value="להשכרה – מונה אחד לכל המסחר" data-l="4.4 מסחר"> להשכרה – המלצה למונה אחד לכל המסחר</label>
+<label><input type="radio" name="d4" data-k="d4" value="למכירה – מונה נפרד מחברת החשמל לכל יחידת מסחר" data-l="4.4 מסחר"> למכירה – המלצה למונה נפרד מחברת החשמל לכל יחידת מסחר</label>
+<label><input type="radio" name="d4" data-k="d4" value="אין מסחר בפרויקט" data-l="4.4 מסחר"> אין מסחר בפרויקט</label>
+<div class="other"><label><input type="radio" name="d4" data-k="d4" value="__o" data-l="4.4 מסחר"> העדפת יזם אחרת:</label><span class="inp"><input data-k="d4o" data-for="d4"></span></div></div>
+</section>
+
+<section class="card"><h2>5. הערות</h2><label class="f"><span class="inp"><textarea data-k="notes" data-l="הערות"></textarea></span></label></section>
+
+<div class="bar"><button type="button" class="btn" id="sendBtn" onclick="sendAnswers()">✉ שליחת התשובות לטיקטין</button>
+<button type="button" class="btn sec" onclick="window.print()" title="הדפסת הטופס במדפסת שלך">🖨 הדפסה</button>
+<button type="button" class="btn sec vonly" onclick="copyAnswers()" title="העתקת כל התשובות כטקסט">העתקת התשובות</button>
+<button type="button" class="btn sec eonly" onclick="resetForm()" title="ניקוי כל השדות והסימונים">ניקוי הטופס</button></div>
+<footer>טיקטין תכנון חשמל (2003) בע״מ | משרד: 08-9310500</footer>
+</main>
+<div id="toast" role="status" hidden></div>
+<script>
+/* פרמטרים מהקישור: r = המייל שאליו חוזרות התשובות, p = שם הפרויקט (מקודדים) */
+function dec(v){try{return decodeURIComponent(escape(atob(v.replace(/-/g,'+').replace(/_/g,'/'))))}catch(e){return ''}}
+const Q=new URLSearchParams(location.search),REPLY=dec(Q.get('r')||''),PROJ=dec(Q.get('p')||'');
+if(PROJ){document.getElementById('pname').textContent=' – '+PROJ;document.title='פתיחת פרויקט '+PROJ+' – טופס למילוי היזם';}
+const KEY='tk-fill-'+(Q.get('p')||'x');
+/* דחיסת התשובות לקישור קצר (במייל) ופתיחתן מחדש בדף לקריאה בלבד */
+const b64u=u8=>{let s='';u8.forEach(c=>s+=String.fromCharCode(c));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');};
+const u8b=t=>{t=t.replace(/-/g,'+').replace(/_/g,'/');const s=atob(t);return Uint8Array.from(s,c=>c.charCodeAt(0));};
+async function pack(o){const st=new Blob([JSON.stringify(o)]).stream().pipeThrough(new CompressionStream('deflate-raw'));return b64u(new Uint8Array(await new Response(st).arrayBuffer()));}
+async function unpack(t){const st=new Blob([u8b(t)]).stream().pipeThrough(new DecompressionStream('deflate-raw'));return JSON.parse(await new Response(st).text());}
+const VIEW=location.hash.startsWith('#a=');
+function toast(t,ms){const el=document.getElementById('toast');el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,ms||3200);}
+const fields=[...document.querySelectorAll('[data-k]')];
+/* כפתור X לניקוי בכל שדה, והקלדה ראשונה מחליפה את הערך הקיים */
+document.querySelectorAll('.inp').forEach(w=>{const i=w.querySelector('input,textarea');const x=document.createElement('button');x.type='button';x.className='x';x.textContent='✕';x.title='ניקוי השדה';x.tabIndex=-1;
+x.onclick=()=>{i.value='';i.focus();save();};w.appendChild(x);
+i.addEventListener('focus',()=>{if(i.value)setTimeout(()=>i.select(),0);});
+if(i.dataset.for)i.addEventListener('input',()=>{const r=document.querySelector('input[name="'+i.dataset.for+'"][value="__o"]');if(r&&i.value)r.checked=true;});});
+function data(){const o={};fields.forEach(f=>{if(f.type==='radio'){if(f.checked)o[f.dataset.k]=f.value;}else if(f.type==='checkbox'){if(f.checked)o[f.dataset.k]=1;}else if(f.value)o[f.dataset.k]=f.value;});return o;}
+function save(){if(VIEW)return;const o={};fields.forEach(f=>{if(f.type==='radio'){if(f.checked)o[f.dataset.k]=f.value;}else if(f.type==='checkbox')o[f.dataset.k]=f.checked;else o[f.dataset.k]=f.value;});try{localStorage.setItem(KEY,JSON.stringify(o))}catch(e){}}
+function fill(o){fields.forEach(f=>{const v=o[f.dataset.k];if(v===undefined)return;if(f.type==='radio')f.checked=(f.value===v);else if(f.type==='checkbox')f.checked=!!v;else f.value=v;});}
+function load(){let o=null;try{o=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){}if(o)fill(o);}
+if(VIEW){document.body.classList.add('view');unpack(location.hash.slice(3)).then(o=>{fill(o);document.getElementById('intro').textContent='התשובות שהתקבלו מהיזם'+(o.company?' – '+o.company:'')+'. הדף לקריאה בלבד – אפשר להדפיס או להעתיק את התשובות.';fields.forEach(f=>{if(f.type==='radio'||f.type==='checkbox')f.disabled=true;else f.readOnly=true;});}).catch(()=>toast('לא ניתן לפתוח את התשובות מהקישור',6000));}else load();document.addEventListener('input',save);document.addEventListener('change',save);
+function resetForm(){fields.forEach(f=>{if(f.type==='radio'||f.type==='checkbox')f.checked=false;else f.value='';});save();toast('הטופס נוקה');}
+function val(k){return (document.querySelector('[data-k="'+k+'"]:not([type=radio])')||{}).value?.trim()||'';}
+function radio(k){const r=document.querySelector('input[data-k="'+k+'"]:checked');if(!r)return '—';return r.value==='__o'?(val(k+'o')||'אחר'):r.value;}
+function answers(){const L=[];const add=(l,v)=>L.push(l+': '+(v||'—'));
+L.push('פרטי היזם');add('שם החברה',val('company'));add('ח.פ.',val('hp'));L.push('');
+L.push('איש קשר');add('שם',val('cname'));add('תפקיד',val('crole'));add('נייד',val('cmob'));add('טלפון משרדי',val('ctel'));add('דוא״ל',val('cmail'));add('כתובת משרד',val('caddr'));L.push('');
+L.push('מה הועבר');document.querySelectorAll('.chk input[type=checkbox]').forEach(c=>L.push((c.checked?'✔ ':'✘ ')+c.dataset.l));add('מסמכי חברה',radio('reg'));L.push('');
+L.push('החלטות היזם');add('4.1 גודל חיבור לדירות',radio('d1'));add('4.2 דירות מיוחדות',radio('d2'));add('4.3 מיקום המונים',radio('d3'));add('4.4 מסחר',radio('d4'));
+const n=val('notes');if(n){L.push('');L.push('הערות: '+n);}return L;}
+async function sendAnswers(){if(!val('company')||!val('hp')){if(!confirmMissing())return;}
+const subj='פתיחת פרויקט'+(PROJ?' '+PROJ:'')+' – תשובות היזם'+(val('company')?' – '+val('company'):''),
+body=['שלום,','','להלן התשובות לטופס פתיחת הפרויקט'+(PROJ?' '+PROJ:'')+':','',...answers(),'','בברכה,',val('cname')||''].join('\n');
+let link='';try{link=location.origin+location.pathname+(Q.get('p')?'?p='+Q.get('p'):'')+'#a='+await pack(data());}catch(e){}
+const mk=b=>'mailto:'+encodeURIComponent(REPLY)+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(b);
+const tail=link?['','לצפייה בכל התשובות בטופס:',link]:[];
+let url=mk(body+'\n'+tail.join('\n'));
+if(url.length>1900&&link){const short=['שלום,','','התשובות לטופס פתיחת הפרויקט'+(PROJ?' '+PROJ:'')+' מוכנות.','שם החברה: '+(val('company')||'—'),'ח.פ.: '+(val('hp')||'—'),'איש קשר: '+([val('cname'),val('cmob')].filter(Boolean).join(', ')||'—'),...tail,'','בברכה,',val('cname')||''].join('\n');url=mk(short);}
+location.href=url;toast('נפתח מייל מוכן עם התשובות – נשאר רק ללחוץ "שלח"'+(REPLY?'':'. כתבו את המייל של איש הקשר בטיקטין'),6000);}
+async function copyAnswers(){try{await navigator.clipboard.writeText(answers().join('\n'));toast('התשובות הועתקו');}catch(e){toast('לא ניתן להעתיק במחשב הזה');}}
+let warned=false;function confirmMissing(){if(warned)return true;warned=true;toast('חסרים שם החברה או ח.פ. – מומלץ להשלים. לחיצה נוספת תשלח בכל זאת',5000);return false;}
+</script></body></html>
