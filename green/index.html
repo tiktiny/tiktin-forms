@@ -103,7 +103,7 @@ header,.ribbon,main{zoom:1}
 <header>
   <img id="logo" alt="טיקטין תכנון חשמל">
   <h1>מילוי אוטומטי של תקן ירוק לבנייני מגורים</h1>
-  <span class="ver">גרסה 1.4 · עודכן 14.11.2026</span>
+  <span class="ver">גרסה 1.5 · עודכן 16.11.2026</span>
   <div class="fz" role="group" aria-label="גודל הטופס" title="שינוי גודל הטופס בלבד – הדפדפן לא מושפע">
     <button id="fzMinus" title="הקטנת הטופס">−</button>
     <button id="fzVal" title="חזרה לגודל רגיל (100%)">100%</button>
@@ -138,7 +138,7 @@ header,.ribbon,main{zoom:1}
     <div class="drop" id="drop">גרור לכאן את קובץ ה-PDF של הצהרת החשמל, או לחץ לבחירת קובץ<div class="small" id="fname"></div></div>
     <input type="file" id="file" accept="application/pdf" hidden>
     <input type="file" id="stampFile" accept="image/png,image/jpeg" hidden>
-    <div style="margin-top:10px"><span class="small">משרדי ייעוץ נתמכים (בנייני מגורים בלבד):</span>
+    <div style="margin-top:10px"><span class="small">משרדי ייעוץ נתמכים (בנייני מגורים; ביוזמות גם גרעין-מעטפת ומשרדים):</span>
       <div class="offices" id="offices"></div></div>
     <details class="help"><summary>הסבר</summary><div>האפליקציה מזהה את משרד הייעוץ לפי הטופס, בודקת שהטופס זהה לנוסח המוכר, ומסמנת את הסעיפים לפי הכללים הקבועים של המשרד. טופס של משרד שאינו ברשימה, טופס שאינו למגורים, או טופס שהנוסח שלו השתנה – לא ימולא, ותוצג הודעה מתאימה. הקובץ והחותמת נשארים במחשב שלך ואינם נשלחים לשום מקום.</div></details>
   </div>
@@ -169,7 +169,7 @@ import * as pdfjsLib from './pdf.min.mjs';
 pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.min.mjs';
 const $ = id => document.getElementById(id);
 const RED = PDFLib.rgb(0.8, 0, 0);
-const OFFICES = ['גולד הנדסה', 'ESD – פיתוח סביבה וקיימות', 'KVS – קיימות ושפ"ע', 'EVERGREEN', 'AVIV', 'WAWA'];
+const OFFICES = ['גולד הנדסה', 'ESD – פיתוח סביבה וקיימות', 'KVS – קיימות ושפ"ע', 'EVERGREEN', 'AVIV', 'WAWA', 'יוזמות (מגורים, גרעין-מעטפת, משרדים)'];
 $('logo').src = window.TIKTIN_LOGO;
 $('offices').innerHTML = OFFICES.map(o => '<span>' + o + '</span>').join('');
 const store = { get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }, set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }, del(k){ try{ localStorage.removeItem(k); }catch(e){} } };
@@ -248,6 +248,7 @@ function detect(pdf){
   else if (N.includes('הנחיותליישוםבתכנון')) key = 'wawa';
   else if (N.includes('הצהרותיועץחשמלותאורה')) key = 'esd';
   else if (N.includes('במסגרתהסמכתהפרויקטלעמידהבדרישות')) key = 'gold';
+  else if (T.includes('נספחי') && T.includes('החתמה') && T.includes('עמידה') && T.includes('מצהיר')) key = 'yozmot';
   else if (N.includes('הצהרותמגוריםלתקןבניהירוקה')) return { err: 'זה טופס של "לשם שפר איכות סביבה". המשרד הזה עדיין לא נתמך באפליקציה – הטופס לא מולא.' };
   if (!key) return { err: 'לא זוהה משרד ייעוץ נתמך בטופס הזה – הטופס לא מולא.<br>המשרדים הנתמכים: ' + OFFICES.join(', ') + '.' };
   if (key === 'gold'){
@@ -257,7 +258,7 @@ function detect(pdf){
   if (pdf.pages.some(p => p.rot)) return { err: 'הטופס מסובב ואינו במבנה המוכר – הטופס לא מולא.', office: key };
   return { key };
 }
-const NAMES = { gold: 'גולד הנדסה', esd: 'ESD – פיתוח סביבה וקיימות', kvs: 'KVS – קיימות ושפ"ע', evergreen: 'EVERGREEN', aviv: 'AVIV', wawa: 'WAWA' };
+const NAMES = { yozmot: 'יוזמות', gold: 'גולד הנדסה', esd: 'ESD – פיתוח סביבה וקיימות', kvs: 'KVS – קיימות ושפ"ע', evergreen: 'EVERGREEN', aviv: 'AVIV', wawa: 'WAWA' };
 const CHANGED = name => 'הטופס זוהה כטופס של ' + name + ', אבל הנוסח שלו שונה מהנוסח שהאפליקציה מכירה. כדי לא לסמן סעיף במקום הלא נכון – הטופס לא מולא. יש למלא אותו ידנית ולעדכן את האפליקציה בנוסח החדש.';
 
 /* ---------- טפסים במבנה קבוע (WAWA / KVS / EVERGREEN / AVIV) ---------- */
@@ -384,6 +385,63 @@ async function kvsPage0(pdf, marks){
   return true;
 }
 
+/* ---------- יוזמות: טבלה עם עמודת "עמידה בסעיף (√/X)" וחתימה בתחתית כל עמוד ---------- */
+function yozType(pdf){ const T = pdf.pages.slice(1).map(p => p.items.filter(i => i.y < 60).map(i => i.t).join(' ')).join(' ');
+  return T.includes('גרעין') ? 'גרעין-מעטפת' : T.includes('משרדים') ? 'משרדים' : T.includes('מגורים') ? 'מגורים' : ''; }
+function yozRule(n, dtl){
+  const N = n.replace(/\s/g, ''), D = dtl.replace(/\s/g, '');
+  if (!N && D.includes('שיטהתפקודית')) return 'x';
+  if (!N) return null;
+  if (N.includes('מתחדשת')) return '';
+  if (N.includes('5280') || D.includes('5280') || /^לפית"?י$/.test(N)) return 'x';
+  if (N.includes('מרכזית')) return 'x';
+  if (/^בקרה/.test(N)) return 'x';
+  if ((N.includes('15%') && N.includes('שיפור')) || N.includes('מנתוןהייחוס')) return 'v';
+  for (const k of ['תאורתפנים', 'חניונים', 'תאורתחוץ', 'מעגליתאורה', 'מדידהומנייה', 'זיהוםאור', 'זוויתהארה', 'גווןאור', 'הכוונתאור', 'רמתההארה', 'עוצמתההארה', 'אחידות', 'מסירתצבע', 'סנוור', 'זיהוםמופחתת']) if (N.includes(k)) return 'v';
+  return null;
+}
+const YOZ_LABEL = { v: 1, x: 0 };
+async function yozPlan(pdf){
+  const marks = [], rows = [], why = [];
+  for (let pi = 1; pi < pdf.pages.length; pi++){
+    const pg = pdf.pages[pi], it = pg.items;
+    const hA = it.find(i => i.t.includes('עמידה')), hN = it.find(i => i.t.includes('שם הסעיף')), hD = it.filter(i => i.t.includes('פירוט הדרישה')).sort((p, q) => p.x - q.x);
+    if (!hA || !hN || hD.length !== 2) return { changed: true, why: 'כותרות טבלה בעמוד ' + (pi + 1) };
+    const hS = it.find(i => i.t === 'סעיף' && Math.abs(i.y - hN.y) < 3); if (!hS) return { changed: true, why: 'עמודת סעיף בעמוד ' + (pi + 1) };
+    const cx = hA.x + hA.w / 2, c = o => o.x + o.w / 2, nameX0 = (c(hD[1]) + c(hN)) / 2, nameX1 = (c(hN) + c(hS)) / 2 + 2, detX0 = (c(hD[0]) + c(hD[1])) / 2;
+    /* קווי השורות – לפי הפיקסלים השחורים בעמודת "עמידה בסעיף" */
+    const px = await pixels(pg), S = px.S, X = Math.round(cx * S); const lines = [];
+    for (let y = Math.round((hA.y + 4) * S); y < px.h; y++){ const k = (y * px.w + X) * 4; if (px.data[k] < 110 && px.data[k+1] < 110 && px.data[k+2] < 110){ const yy = y / S; if (!lines.length || yy - lines[lines.length - 1] > 3) lines.push(yy); } }
+    for (let i = 0; i + 1 < lines.length; i++){
+      const y0 = lines[i], y1 = lines[i + 1]; if (y1 - y0 < 12) continue;
+      const k = (Math.round((y0 + y1) / 2 * S) * px.w + X) * 4, r = px.data[k], g = px.data[k+1], b = px.data[k+2];
+      if (r < 235 && Math.abs(r - g) < 10 && Math.abs(r - b) < 10) continue;          /* שורת כותרת אפורה */
+      const inRow = o => o.y > y0 + 1 && o.y - o.h < y1 - 1;
+      const name = it.filter(o => inRow(o) && o.x >= nameX0 - 2 && !(o.x > c(hN) && /^[\d.\s]+$/.test(o.t))).sort((p, q) => p.y - q.y || q.x - p.x).map(o => o.t).join(' ').trim();
+      const dtl = it.filter(o => inRow(o) && o.x >= detX0 - 2 && o.x < nameX0).map(o => o.t).join(' ');
+      if (!name && !dtl) continue;
+      const v = yozRule(name, dtl);
+      if (v === null){ why.push('עמוד ' + (pi + 1) + ': ' + (name || dtl).slice(0, 40)); continue; }
+      if (v) marks.push({ t: v === 'v' ? 'check' : 'cross', p: pi, x: cx, y: (y0 + y1) / 2, h: Math.min(9, (y1 - y0) * 0.32), lw: 1.8 });
+      rows.push([name || 'שיטה תפקודית', v === 'v' ? 1 : v === 'x' ? 0 : null]);
+    }
+    /* שם, חברה וחותמת */
+    const ul = lab => { const L = it.find(i => i.t.replace(/[\s,]/g, '').startsWith(lab)); if (!L) return null;
+      if (L.t.includes('__')) return { x: L.x, w: L.w * 0.75, y: L.y, h: L.h };
+      const u = it.filter(i => i.t.includes('__') && Math.abs(i.y - L.y) < 2 && i.x + i.w <= L.x + 3).sort((p, q) => q.x - p.x)[0];
+      return u ? { x: u.x, w: u.w, y: u.y, h: u.h } : null; };
+    const fA = ul('אני'), fC = ul('מחברת'), fS = ul('חתימה');
+    if (!fA || !fC || !fS) return { changed: true, why: 'שורת החתימה בעמוד ' + (pi + 1) };
+    const sz = Math.max(7.5, Math.min(9.5, fA.h * 1.1));
+    marks.push({ t: 'text', p: pi, v: 'signer', y: fA.y - 1.6, size: sz, xc: fA.x + fA.w / 2, maxw: fA.w + 10 });
+    marks.push({ t: 'text', p: pi, v: 'company', y: fC.y - 1.6, size: sz * 0.88, xr: fC.x + fC.w, maxw: 220 });
+    const sx = fS.x + fS.w / 2; marks.push({ t: 'stamp', p: pi, r: [sx - 17, fS.y - 7, sx + 17, fS.y + 20] });
+  }
+  if (why.length) return { changed: true, why: why.join(' | ') };
+  if (!rows.length) return { changed: true, why: 'לא נמצאו סעיפים' };
+  return { marks, rows };
+}
+
 /* ---------- ניתוח הטופס ---------- */
 function answers(){ return { project: $('project').value.trim(), tender: $('tender').value === 'yes', tenderSet: $('tender').value !== '', tsIn: $('ts').value === 'in', date: $('date').value.trim(), signer: $('signer').value.trim(), company: $('company').value.trim(), hp: $('hp').value.trim() }; }
 async function analyze(){
@@ -393,7 +451,8 @@ async function analyze(){
   if (d.err){ show('err', d.err); return; }
   if (['wawa','kvs','evergreen','aviv'].includes(d.key) && !verifyStatic(pdf, window.GREEN_TEMPLATES[d.key])){ show('err', CHANGED(NAMES[d.key])); return; }
   analysis = { pdf, key: d.key };
-  show('ok', 'זוהה טופס של <b>' + NAMES[d.key] + '</b> לבניין מגורים, ' + (pdf.pages.length === 1 ? 'עמוד אחד' : pdf.pages.length + ' עמודים') + '. השלם את פרטי הפרויקט ולחץ "מילוי הטופס".');
+  if (d.key === 'yozmot' && !yozType(pdf)){ show('err', CHANGED(NAMES[d.key])); analysis = null; return; }
+  show('ok', 'זוהה טופס של <b>' + NAMES[d.key] + '</b> ' + (d.key === 'yozmot' ? '(' + yozType(pdf) + ')' : 'לבניין מגורים') + ', ' + (pdf.pages.length === 1 ? 'עמוד אחד' : pdf.pages.length + ' עמודים') + '. השלם את פרטי הפרויקט ולחץ "מילוי הטופס".');
 }
 
 /* ---------- כתיבה ל-PDF ---------- */
@@ -416,9 +475,12 @@ async function build(marks, a){
   for (const m of marks){
     if (m.when && !cond[m.when]) continue;
     const pg = pages[m.p], H = pg.getHeight();
-    if (m.t === 'check'){
+    if (m.t === 'cross'){
+      const h = m.h * 0.8;
+      for (const [a1, b1, a2, b2] of [[-h, -h, h, h], [-h, h, h, -h]]) pg.drawLine({ start: { x: m.x + a1, y: H - (m.y + b1) }, end: { x: m.x + a2, y: H - (m.y + b2) }, thickness: 1.8, color: RED, lineCap: PDFLib.LineCapStyle.Round });
+    } else if (m.t === 'check'){
       const h = m.h, P = [[m.x - h, m.y], [m.x - h * 0.25, m.y + h * 0.8], [m.x + h * 1.05, m.y - h * 0.95]];
-      for (let i = 0; i < 2; i++) pg.drawLine({ start: { x: P[i][0], y: H - P[i][1] }, end: { x: P[i+1][0], y: H - P[i+1][1] }, thickness: Math.max(1, h * 0.54), color: RED, lineCap: PDFLib.LineCapStyle.Round });
+      for (let i = 0; i < 2; i++) pg.drawLine({ start: { x: P[i][0], y: H - P[i][1] }, end: { x: P[i+1][0], y: H - P[i+1][1] }, thickness: m.lw || Math.max(1, h * 0.54), color: RED, lineCap: PDFLib.LineCapStyle.Round });
     } else if (m.t === 'text'){
       const txt = visual(val[m.v] || ''); if (!txt) continue;
       let size = m.size; while (m.maxw && font.widthOfTextAtSize(txt, size) > m.maxw && size > 5) size -= 0.5;
@@ -448,7 +510,11 @@ async function fill(){
   if (key === 'aviv' && !/^\d{9}$/.test(a.hp)) miss.push('בטופס של AVIV נדרש ח.פ. של החברה (9 ספרות)');
   if (key === 'esd' && !a.project) miss.push('בטופס של ESD נדרש שם הפרויקט');
   let marks, rows;
-  if (key === 'gold' || key === 'esd'){
+  if (key === 'yozmot'){
+    const pl = await yozPlan(pdf);
+    if (pl.changed){ show('err', CHANGED(NAMES[key])); return; }
+    marks = pl.marks; rows = pl.rows.filter(r => r[1] !== null);
+  } else if (key === 'gold' || key === 'esd'){
     const pl = await planTable(pdf, key, a);
     if (pl.changed){ show('err', CHANGED(NAMES[key])); return; }
     marks = pl.marks; rows = pl.rows;
