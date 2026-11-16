@@ -103,7 +103,7 @@ header,.ribbon,main{zoom:1}
 <header>
   <img id="logo" alt="טיקטין תכנון חשמל">
   <h1>מילוי אוטומטי של תקן ירוק לבנייני מגורים</h1>
-  <span class="ver">גרסה 1.5 · עודכן 16.11.2026</span>
+  <span class="ver">גרסה 1.6 · עודכן 16.11.2026</span>
   <div class="fz" role="group" aria-label="גודל הטופס" title="שינוי גודל הטופס בלבד – הדפדפן לא מושפע">
     <button id="fzMinus" title="הקטנת הטופס">−</button>
     <button id="fzVal" title="חזרה לגודל רגיל (100%)">100%</button>
@@ -258,7 +258,7 @@ function detect(pdf){
   if (pdf.pages.some(p => p.rot)) return { err: 'הטופס מסובב ואינו במבנה המוכר – הטופס לא מולא.', office: key };
   return { key };
 }
-const NAMES = { yozmot: 'יוזמות', gold: 'גולד הנדסה', esd: 'ESD – פיתוח סביבה וקיימות', kvs: 'KVS – קיימות ושפ"ע', evergreen: 'EVERGREEN', aviv: 'AVIV', wawa: 'WAWA' };
+const NAMES = { yozmot: 'יוזמות', gold: 'גולד הנדסה', esd: 'ESD – פיתוח סביבה וקיימות', kvs: 'KVS – קיימות ושפ"ע', kvs2: 'KVS – קיימות ושפ"ע', evergreen: 'EVERGREEN', aviv: 'AVIV', wawa: 'WAWA' };
 const CHANGED = name => 'הטופס זוהה כטופס של ' + name + ', אבל הנוסח שלו שונה מהנוסח שהאפליקציה מכירה. כדי לא לסמן סעיף במקום הלא נכון – הטופס לא מולא. יש למלא אותו ידנית ולעדכן את האפליקציה בנוסח החדש.';
 
 /* ---------- טפסים במבנה קבוע (WAWA / KVS / EVERGREEN / AVIV) ---------- */
@@ -385,6 +385,60 @@ async function kvsPage0(pdf, marks){
   return true;
 }
 
+/* ---------- KVS – נוסח 8 עמודים: חלוקה לקריטריונים, משבצות כן/לא ושורות חתימה ---------- */
+const KVS2_RULES = [
+  { k: 'גישההמרשמית', label: 'צריכת אנרגיה לתאורה בגישה המרשמית + שיפור 15%', rows: ['yes', 'yes'], signs: [1] },
+  { k: 'תאורתפנים', label: 'שליטה אוטומטית בתאורת פנים', rows: [], signs: [1] },
+  { k: 'תאורתחניונים', label: 'שליטה בתאורת חניונים (50% ו-80%)', rows: ['both'], signs: [1] },
+  { k: 'תאורתחוץ', label: 'שליטה בתאורת חוץ', rows: [], signs: [1] },
+  { k: 'תאורהמרכזית', label: 'שליטה בתאורה מרכזית (מפסק מרכזי)', rows: ['no'], signs: [0], v: 0 },
+  { k: 'למיםחמים', label: 'מערכת בקרה וניהול למים חמים', rows: ['yes'], signs: [1] },
+  { k: 'ביחידותדיור', label: 'מונה חזותי דירתי', rows: ['tender', 'no'], signs: ['tender', 0], v: 'tender', smallN: 10 },
+  { k: 'בשטחיםמשותפים', label: 'מדידה ומנייה בשטחים משותפים (תאורת חוץ, מעליות, משאבות)', rows: ['yes'], signs: [1], small: ['תאורתחוץ', 'מעליות', 'משאבות'], smallN: 10 },
+  { k: 'זוויתהארה', label: 'זווית הארה', rows: [], signs: [1] },
+  { k: 'גוןהאור', label: 'גוון האור', rows: [], signs: [1] },
+  { k: 'זיהוםמופחתת', label: 'הכנה לעמדות טעינה לרכב חשמלי', rows: ['yes'], signs: [1] },
+  { k: 'רמותההארה', label: 'רמות ההארה', rows: [], signs: [1] },
+  { k: 'אחידותההארה', label: 'אחידות ההארה', rows: [], signs: [1] }
+];
+async function kvs2Plan(pdf){
+  const marks = [], rows = [], blocks = []; let cur = null;
+  if (pdf.pages.length !== 8 || !(await kvsPage0(pdf, marks))) return { changed: true, why: 'עמוד 1' };
+  for (let pi = 1; pi < pdf.pages.length; pi++){
+    const pg = pdf.pages[pi], it = pg.items.filter(i => i.y < 790).sort((p, q) => p.y - q.y || q.x - p.x);
+    const lineText = y => it.filter(i => Math.abs(i.y - y) < 3).sort((p, q) => q.x - p.x).map(i => i.t).join('').replace(/\s/g, '');
+    const done = new Set();
+    for (const i of it){
+      if (i.t.includes('קריטריון') && !done.has(Math.round(i.y)) && lineText(i.y).startsWith('קריטריון')){ done.add(Math.round(i.y)); cur = { head: lineText(i.y), big: [], small: [], signs: [] }; blocks.push(cur); continue; }
+      if (!cur) continue;
+      if (i.box && i.h >= 16) cur.big.push({ pi, b: i });
+      else if (i.box) cur.small.push({ pi, b: i, lab: it.filter(o => !o.box && Math.abs(o.y - i.y) < 3 && o.x < i.x).map(o => o.t).join('').replace(/\s/g, '') });
+      else if (/^_{10,}$/.test(i.t)) cur.signs.push({ pi, u: i });
+    }
+  }
+  const used = new Set();
+  for (const bl of blocks){
+    const R = KVS2_RULES.find(r => bl.head.includes(r.k));
+    if (!R || used.has(R.k)) return { changed: true, why: 'קריטריון לא מוכר: ' + bl.head.slice(0, 40) };
+    used.add(R.k);
+    const brows = [];
+    for (const o of bl.big){ const r = brows.find(r => r[0].pi === o.pi && Math.abs(r[0].b.y - o.b.y) < 3); if (r) r.push(o); else brows.push([o]); }
+    if (brows.length !== R.rows.length || brows.some(r => r.length !== 2) || bl.signs.length !== R.signs.length) return { changed: true, why: 'מבנה הקריטריון ' + R.label };
+    if ((R.smallN || 0) !== bl.small.length) return { changed: true, why: 'רשימת המערכות ב' + R.label };
+    const chk = async (o, when) => { const c = await boxCenter(pdf.pages[o.pi], o.b); if (!c) return false; const m = { t: 'check', p: o.pi, x: c.x, y: c.y, h: Math.max(2.4, c.s * 0.42) }; if (when) m.when = when; marks.push(m); return true; };
+    for (let j = 0; j < brows.length; j++){
+      const [no, yes] = brows[j].sort((p, q) => p.b.x - q.b.x), act = R.rows[j];
+      const ok = act === 'yes' ? await chk(yes) : act === 'no' ? await chk(no) : act === 'both' ? (await chk(yes)) && (await chk(no)) : (await chk(yes, 'tender')) && (await chk(no, 'notTender'));
+      if (!ok) return { changed: true, why: 'משבצת ב' + R.label };
+    }
+    for (const k of R.small || []){ const o = bl.small.find(s => s.lab.includes(k)); if (!o || !(await chk(o))) return { changed: true, why: k }; }
+    bl.signs.forEach((s, j) => { const w = R.signs[j]; if (!w) return; const cx = s.u.x + s.u.w / 2, m = { t: 'stamp', p: s.pi, r: [cx - 23, s.u.y - 33, cx + 23, s.u.y + 3] }; if (w === 'tender') m.when = 'tender'; marks.push(m); });
+    rows.push([R.label, R.v === undefined ? 1 : R.v]);
+  }
+  if (used.size !== KVS2_RULES.length) return { changed: true, why: 'חסרים קריטריונים' };
+  return { marks, rows };
+}
+
 /* ---------- יוזמות: טבלה עם עמודת "עמידה בסעיף (√/X)" וחתימה בתחתית כל עמוד ---------- */
 function yozType(pdf){ const T = pdf.pages.slice(1).map(p => p.items.filter(i => i.y < 60).map(i => i.t).join(' ')).join(' ');
   return T.includes('גרעין') ? 'גרעין-מעטפת' : T.includes('משרדים') ? 'משרדים' : T.includes('מגורים') ? 'מגורים' : ''; }
@@ -449,6 +503,7 @@ async function analyze(){
   let pdf; try { pdf = await readPdf(srcBytes); } catch (e) { show('err', 'הקובץ אינו קובץ PDF תקין או שהוא מוגן – הטופס לא מולא.'); return; }
   const d = detect(pdf);
   if (d.err){ show('err', d.err); return; }
+  if (d.key === 'kvs' && !verifyStatic(pdf, window.GREEN_TEMPLATES.kvs)){ const pl = await kvs2Plan(pdf); if (pl.changed){ if (window.__fpdbg) console.log('KVS2', pl.why); show('err', CHANGED(NAMES.kvs)); return; } d.key = 'kvs2'; }
   if (['wawa','kvs','evergreen','aviv'].includes(d.key) && !verifyStatic(pdf, window.GREEN_TEMPLATES[d.key])){ show('err', CHANGED(NAMES[d.key])); return; }
   analysis = { pdf, key: d.key };
   if (d.key === 'yozmot' && !yozType(pdf)){ show('err', CHANGED(NAMES[d.key])); analysis = null; return; }
@@ -514,6 +569,10 @@ async function fill(){
     const pl = await yozPlan(pdf);
     if (pl.changed){ show('err', CHANGED(NAMES[key])); return; }
     marks = pl.marks; rows = pl.rows.filter(r => r[1] !== null);
+  } else if (key === 'kvs2'){
+    const pl = await kvs2Plan(pdf);
+    if (pl.changed){ show('err', CHANGED(NAMES[key])); return; }
+    marks = pl.marks; rows = pl.rows.map(([l, v]) => [l, v === 'tender' ? (a.tender ? 1 : 0) : v]);
   } else if (key === 'gold' || key === 'esd'){
     const pl = await planTable(pdf, key, a);
     if (pl.changed){ show('err', CHANGED(NAMES[key])); return; }
