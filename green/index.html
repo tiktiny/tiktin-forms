@@ -103,7 +103,7 @@ header,.ribbon,main{zoom:1}
 <header>
   <img id="logo" alt="טיקטין תכנון חשמל">
   <h1>מילוי אוטומטי של תקן ירוק לבנייני מגורים</h1>
-  <span class="ver">גרסה 1.6 · עודכן 16.11.2026</span>
+  <span class="ver">גרסה 1.7 · עודכן 17.11.2026</span>
   <div class="fz" role="group" aria-label="גודל הטופס" title="שינוי גודל הטופס בלבד – הדפדפן לא מושפע">
     <button id="fzMinus" title="הקטנת הטופס">−</button>
     <button id="fzVal" title="חזרה לגודל רגיל (100%)">100%</button>
@@ -441,7 +441,7 @@ async function kvs2Plan(pdf){
 
 /* ---------- יוזמות: טבלה עם עמודת "עמידה בסעיף (√/X)" וחתימה בתחתית כל עמוד ---------- */
 function yozType(pdf){ const T = pdf.pages.slice(1).map(p => p.items.filter(i => i.y < 60).map(i => i.t).join(' ')).join(' ');
-  return T.includes('גרעין') ? 'גרעין-מעטפת' : T.includes('משרדים') ? 'משרדים' : T.includes('מגורים') ? 'מגורים' : ''; }
+  return T.includes('גרעין') ? 'גרעין-מעטפת' : T.includes('משרדים') ? 'משרדים' : T.includes('מגורים') ? 'מגורים' : pdf.text.includes('מקדמי') ? 'שלב מקדמי' : ''; }
 function yozRule(n, dtl){
   const N = n.replace(/\s/g, ''), D = dtl.replace(/\s/g, '');
   if (!N && D.includes('שיטהתפקודית')) return 'x';
@@ -451,7 +451,7 @@ function yozRule(n, dtl){
   if (N.includes('מרכזית')) return 'x';
   if (/^בקרה/.test(N)) return 'x';
   if ((N.includes('15%') && N.includes('שיפור')) || N.includes('מנתוןהייחוס')) return 'v';
-  for (const k of ['תאורתפנים', 'חניונים', 'תאורתחוץ', 'מעגליתאורה', 'מדידהומנייה', 'זיהוםאור', 'זוויתהארה', 'גווןאור', 'הכוונתאור', 'רמתההארה', 'עוצמתההארה', 'אחידות', 'מסירתצבע', 'סנוור', 'זיהוםמופחתת']) if (N.includes(k)) return 'v';
+  for (const k of ['תאורתפנים', 'חניונים', 'מיםחמים', 'תאורתחוץ', 'מעגליתאורה', 'מדידהומנייה', 'זיהוםאור', 'זוויתהארה', 'גווןאור', 'הכוונתאור', 'רמתההארה', 'עוצמתההארה', 'אחידות', 'מסירתצבע', 'סנוור', 'זיהוםמופחתת']) if (N.includes(k)) return 'v';
   return null;
 }
 const YOZ_LABEL = { v: 1, x: 0 };
@@ -469,7 +469,7 @@ async function yozPlan(pdf){
     for (let i = 0; i + 1 < lines.length; i++){
       const y0 = lines[i], y1 = lines[i + 1]; if (y1 - y0 < 12) continue;
       const k = (Math.round((y0 + y1) / 2 * S) * px.w + X) * 4, r = px.data[k], g = px.data[k+1], b = px.data[k+2];
-      if (r < 235 && Math.abs(r - g) < 10 && Math.abs(r - b) < 10) continue;          /* שורת כותרת אפורה */
+      if (r < 235 || g < 235 || b < 235) continue;          /* שורת כותרת אפורה או צבעונית */
       const inRow = o => o.y > y0 + 1 && o.y - o.h < y1 - 1;
       const name = it.filter(o => inRow(o) && o.x >= nameX0 - 2 && !(o.x > c(hN) && /^[\d.\s]+$/.test(o.t))).sort((p, q) => p.y - q.y || q.x - p.x).map(o => o.t).join(' ').trim();
       const dtl = it.filter(o => inRow(o) && o.x >= detX0 - 2 && o.x < nameX0).map(o => o.t).join(' ');
@@ -484,12 +484,20 @@ async function yozPlan(pdf){
       if (L.t.includes('__')) return { x: L.x, w: L.w * 0.75, y: L.y, h: L.h };
       const u = it.filter(i => i.t.includes('__') && Math.abs(i.y - L.y) < 2 && i.x + i.w <= L.x + 3).sort((p, q) => q.x - p.x)[0];
       return u ? { x: u.x, w: u.w, y: u.y, h: u.h } : null; };
-    const fA = ul('אני'), fC = ul('מחברת'), fS = ul('חתימה');
+    let fA, fC, fS, cw = 220;
+    const AC = it.find(i => i.t.includes('אני') && i.t.includes('מחברת') && i.t.includes('__'));
+    if (AC){   /* נוסח השלב המקדמי: "אני, ___,מחברת" בפריט אחד והקו של השם מימינו */
+      const u = it.filter(i => /^_{8,}$/.test(i.t) && Math.abs(i.y - AC.y) < 2 && i.x > AC.x + AC.w - 5).sort((p, q) => p.x - q.x)[0];
+      fA = u ? { x: u.x, w: u.w, y: u.y, h: u.h } : null;
+      fC = { x: AC.x + AC.w * 0.2, w: AC.w * 0.7, y: AC.y, h: AC.h }; cw = AC.w * 0.7;
+      const L = it.find(i => i.t.trim() === 'חתימה'), v = L && it.filter(i => /^_{8,}$/.test(i.t) && Math.abs(i.y - L.y) < 2).sort((p, q) => Math.abs(p.x - L.x) - Math.abs(q.x - L.x))[0];
+      fS = v ? { x: v.x, w: v.w, y: v.y, h: v.h } : null;
+    } else { fA = ul('אני'); fC = ul('מחברת'); fS = ul('חתימה'); }
     if (!fA || !fC || !fS) return { changed: true, why: 'שורת החתימה בעמוד ' + (pi + 1) };
     const sz = Math.max(7.5, Math.min(9.5, fA.h * 1.1));
     marks.push({ t: 'text', p: pi, v: 'signer', y: fA.y - 1.6, size: sz, xc: fA.x + fA.w / 2, maxw: fA.w + 10 });
-    marks.push({ t: 'text', p: pi, v: 'company', y: fC.y - 1.6, size: sz * 0.88, xr: fC.x + fC.w, maxw: 220 });
-    const sx = fS.x + fS.w / 2; marks.push({ t: 'stamp', p: pi, r: [sx - 17, fS.y - 7, sx + 17, fS.y + 20] });
+    marks.push({ t: 'text', p: pi, v: 'company', y: fC.y - 1.6, size: sz * 0.88, xr: fC.x + fC.w, maxw: cw });
+    const sx = fS.x + fS.w / 2, big = AC && fS.y + 24 < pg.H; marks.push({ t: 'stamp', p: pi, r: big ? [sx - 24, fS.y - 6, sx + 24, fS.y + 24] : [sx - 17, fS.y - 7, sx + 17, fS.y + 20] });
   }
   if (why.length) return { changed: true, why: why.join(' | ') };
   if (!rows.length) return { changed: true, why: 'לא נמצאו סעיפים' };
@@ -566,7 +574,7 @@ async function fill(){
   if (key === 'esd' && !a.project) miss.push('בטופס של ESD נדרש שם הפרויקט');
   let marks, rows;
   if (key === 'yozmot'){
-    const pl = await yozPlan(pdf);
+    const pl = await yozPlan(pdf); if (pl.changed && window.__fpdbg) console.log('YOZ', pl.why);
     if (pl.changed){ show('err', CHANGED(NAMES[key])); return; }
     marks = pl.marks; rows = pl.rows.filter(r => r[1] !== null);
   } else if (key === 'kvs2'){
