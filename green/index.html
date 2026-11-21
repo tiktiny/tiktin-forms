@@ -625,5 +625,8 @@ $('stampFile').onchange = e => { const f = e.target.files[0]; if (!f) return; co
 $('reset').onclick = () => { srcBytes = null; srcName = ''; analysis = null; $('fname').textContent = ''; $('statusCard').hidden = true; clearOut(); defaults(); };
 window.__green = { loadBytes: async (b, n) => { srcName = n; srcBytes = b; await analyze(); }, fill, setStamp: (d, keep) => { stampData = d; if (keep) store.set('tiktin-green-stamp', d); paintStamp(); }, out: () => outBytes };
 </script>
+
+<p style="text-align:center;color:#8a96a3;font-size:12px;margin:14px 0 10px">האתר אוסף נתוני שימוש (סוג מכשיר ומיקום משוער), בלי שמות משתמשים.</p>
+<script src="https://tiktiny.github.io/tiktin-tools/track.js" defer></script>
 </body>
 </html>
