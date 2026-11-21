@@ -162,4 +162,7 @@ if(url.length>1900&&link){const short=['שלום,','','התשובות לטופס
 location.href=url;toast('נפתח מייל מוכן עם התשובות – נשאר רק ללחוץ "שלח"'+(REPLY?'':'. כתבו את המייל של איש הקשר בטיקטין'),6000);}
 async function copyAnswers(){try{await navigator.clipboard.writeText(answers().join('\n'));toast('התשובות הועתקו');}catch(e){toast('לא ניתן להעתיק במחשב הזה');}}
 let warned=false;function confirmMissing(){if(warned)return true;warned=true;toast('חסרים שם החברה או ח.פ. – מומלץ להשלים. לחיצה נוספת תשלח בכל זאת',5000);return false;}
-</script></body></html>
+</script>
+<p style="text-align:center;color:#8a96a3;font-size:12px;margin:14px 0 10px">האתר אוסף נתוני שימוש (סוג מכשיר ומיקום משוער), בלי שמות משתמשים.</p>
+<script src="https://tiktiny.github.io/tiktin-tools/track.js" defer></script>
+</body></html>

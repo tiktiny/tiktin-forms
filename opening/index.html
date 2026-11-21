@@ -249,4 +249,7 @@ window.addEventListener('afterprint',()=>document.body.classList.remove('pdoc'))
 /* הפלט המודפס / PDF: בלי קישורים פעילים ובלי כפתורים – הקישורים חוזרים לפעול אחרי ההדפסה */
 window.addEventListener('beforeprint',()=>document.querySelectorAll('main a[href]').forEach(a=>{a.dataset.h=a.getAttribute('href');a.removeAttribute('href');}));
 window.addEventListener('afterprint',()=>document.querySelectorAll('main a[data-h]').forEach(a=>{a.setAttribute('href',a.dataset.h);delete a.dataset.h;}));
-</script></body></html>
+</script>
+<p style="text-align:center;color:#8a96a3;font-size:12px;margin:14px 0 10px">האתר אוסף נתוני שימוש (סוג מכשיר ומיקום משוער), בלי שמות משתמשים.</p>
+<script src="https://tiktiny.github.io/tiktin-tools/track.js" defer></script>
+</body></html>
