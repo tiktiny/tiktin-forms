@@ -103,7 +103,7 @@ header,.ribbon,main{zoom:1}
 <header>
   <img id="logo" alt="טיקטין תכנון חשמל">
   <h1>מילוי אוטומטי של תקן ירוק לבנייני מגורים</h1>
-  <span class="ver">גרסה 1.7 · עודכן 17.11.2026</span>
+  <span class="ver">גרסה 1.8 · עודכן 22.11.2026</span>
   <div class="fz" role="group" aria-label="גודל הטופס" title="שינוי גודל הטופס בלבד – הדפדפן לא מושפע">
     <button id="fzMinus" title="הקטנת הטופס">−</button>
     <button id="fzVal" title="חזרה לגודל רגיל (100%)">100%</button>
@@ -523,7 +523,7 @@ function visual(s){
   if (!/[\u0590-\u05FF]/.test(s)) return s;
   const flip = { '(': ')', ')': '(', '[': ']', ']': '[' };
   let r = [...s].reverse().map(c => flip[c] || c).join('');
-  r = r.replace(/[A-Za-z0-9][A-Za-z0-9.,:\/\-]*[A-Za-z0-9]|[A-Za-z0-9]/g, m => [...m].reverse().join(''));
+  r = r.replace(/%?[A-Za-z0-9][A-Za-z0-9.,:\/\-]*[A-Za-z0-9]|%?[A-Za-z0-9]/g, m => [...m].reverse().join(''));   /* כולל אחוזים: 5% */
   return [...r].reverse().join('');   /* הגופן הופך בעצמו מחרוזת עברית */
 }
 async function build(marks, a){
@@ -545,7 +545,7 @@ async function build(marks, a){
       const h = m.h, P = [[m.x - h, m.y], [m.x - h * 0.25, m.y + h * 0.8], [m.x + h * 1.05, m.y - h * 0.95]];
       for (let i = 0; i < 2; i++) pg.drawLine({ start: { x: P[i][0], y: H - P[i][1] }, end: { x: P[i+1][0], y: H - P[i+1][1] }, thickness: m.lw || Math.max(1, h * 0.54), color: RED, lineCap: PDFLib.LineCapStyle.Round });
     } else if (m.t === 'text'){
-      const txt = visual(val[m.v] || ''); if (!txt) continue;
+      const txt = visual(m.lit || val[m.v] || ''); if (!txt) continue;
       let size = m.size; while (m.maxw && font.widthOfTextAtSize(txt, size) > m.maxw && size > 5) size -= 0.5;
       const w = font.widthOfTextAtSize(txt, size), x = m.xc != null ? m.xc - w / 2 : m.xr - w;
       pg.drawText(txt, { x, y: H - m.y, size, font, color: RED });
@@ -560,6 +560,52 @@ async function preview(bytes){
   const doc = await pdfjsLib.getDocument({ data: bytes.slice(), verbosity: 0, disableFontFace: true }).promise; const box = $('preview'); box.innerHTML = '';
   for (let i = 1; i <= doc.numPages; i++){ const p = await doc.getPage(i), vp = p.getViewport({ scale: 1.5 }); const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height; box.appendChild(c); await p.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise; }
   $('prevCard').hidden = false;
+}
+/* ---------- הערת עמדות טעינה: בכל טופס עם סעיף הכנה לטעינת רכב חשמלי ---------- */
+/* מוסיף מתחת לסעיף: תשתית עם סיום במפסק פאקט בלבד, ללא עמדת הטעינה עצמה */
+/* פס ריק ראשון (בלי קווים ובלי טקסט) בגובה hh בין y0 ל-y1, ברוחב L..R – כדי לא לכתוב על קווי טבלה */
+async function freeBand(pg, L, R, y0, y1, hh){
+  const px = await pixels(pg), S = px.S, ax = Math.max(0, Math.floor(L * S)), bx = Math.min(px.w - 1, Math.ceil(R * S)), need = Math.ceil(hh * S);
+  let run = 0;
+  for (let y = Math.max(0, Math.ceil(y0 * S)); y < Math.min(px.h, Math.floor(y1 * S)); y++){
+    let dark = false;
+    for (let x = ax; x <= bx; x++){ const k = (y * px.w + x) * 4; if (px.data[k] + px.data[k+1] + px.data[k+2] < 600){ dark = true; break; } }
+    run = dark ? 0 : run + 1; if (run >= need) return (y - need + 1) / S;
+  }
+  return null;
+}
+async function evNote(pdf, marks){
+  for (let pi = 0; pi < pdf.pages.length; pi++){
+    const it = pdf.pages[pi].items.filter(i => !i.box);
+    const seeds = it.filter(i => /טעינ/.test(i.t)).sort((p, q) => p.y - q.y);
+    for (const s of seeds){
+      const near = it.filter(i => Math.abs(i.y - s.y) < 40).map(i => i.t).join(' ');
+      if (/אופני/.test(near) || !/רכב|חני/.test(near)) continue;
+      // הפסקה: שורות רצופות סביב השורה של "טעינה", באותו טור
+      const lineOf = y => it.filter(i => Math.abs(i.y - y) < 2.5);
+      let L = Math.min(...lineOf(s.y).map(i => i.x)), R = Math.max(...lineOf(s.y).map(i => i.x + i.w));
+      const inCol = i => i.x + i.w > L - 25 && i.x < R + 25;
+      const lh = Math.max(9, s.h || 10);
+      let top = s.y, bot = s.y;
+      for (;;){ const up = it.filter(i => inCol(i) && i.y < top - 2 && i.y > top - lh * 2.1); if (!up.length) break; top = Math.min(...up.map(i => i.y)); }
+      for (;;){ const dn = it.filter(i => inCol(i) && i.y > bot + 2 && i.y < bot + lh * 2.1); if (!dn.length) break; bot = Math.max(...dn.map(i => i.y)); }
+      const block = it.filter(i => inCol(i) && i.y >= top - 2 && i.y <= bot + 2);
+      const body = block.filter(i => i.y >= s.y - 2);   // יישור לטקסט הסעיף עצמו (בלי כותרת שמעליו)
+      L = Math.min(...body.map(i => i.x)); R = Math.max(...body.map(i => i.x + i.w));
+      const below = it.filter(i => i.x + i.w > L && i.x < R && i.y > bot + 2).map(i => i.y);
+      const next = below.length ? Math.min(...below) : pdf.pages[pi].H - 20;
+      const ft = await freeBand(pdf.pages[pi], L, R, bot + 3, next - 1, 12);
+      if (ft == null) continue;     // אין מקום פנוי מתחת לסעיף (גם לא מתחת לקו הטבלה) — לא כותבים על טקסט או על קווים
+      const txt = block.map(i => i.t).join(' ');
+      const pcs = [...new Set((txt.match(/\d+(?:\.\d+)?\s*%/g) || []).map(x => x.replace(/\s/g, '')))];
+      const lit = (pcs.length === 1 && !/בפועל/.test(txt))
+        ? 'תסופק תשתית לחניה עם סיום במפסק פאקט ל-' + pcs[0] + ' מהחניות - מפסק פאקט בלבד, ללא עמדת הטעינה עצמה'
+        : 'תסופק תשתית לחניה עם סיום במפסק פאקט בלבד - ללא עמדת הטעינה עצמה';
+      marks.push({ t: 'text', p: pi, lit, y: ft + 9.5, size: 9, xr: R, maxw: Math.max(200, R - L), when: 'always' });
+      return true;
+    }
+  }
+  return false;
 }
 async function fill(){
   clearOut();
@@ -594,8 +640,9 @@ async function fill(){
     rows = SUMMARY[key].map(([l, v]) => [l, v === 'tender' ? (a.tender ? 1 : 0) : v]);
   }
   if (miss.length){ show('err', 'לפני המילוי צריך להשלים:<br>• ' + miss.join('<br>• ')); return; }
+  let evAdded = false; try { evAdded = await evNote(pdf, marks); } catch (e) { evAdded = false; }
   try { outBytes = await build(marks, a); } catch (e) { show('err', 'המילוי נכשל: ' + (e && e.message || e) + ' – הטופס לא מולא.'); return; }
-  show('ok', 'הטופס של <b>' + NAMES[key] + '</b> מולא ונחתם. בדוק את התצוגה למטה לפני שליחה ליועץ, ואז לחץ "ייצוא PDF".');
+  show('ok', 'הטופס של <b>' + NAMES[key] + '</b> מולא ונחתם.' + (evAdded ? ' בסעיף עמדות הטעינה נוספה ההבהרה: מפסק פאקט בלבד, ללא עמדת הטעינה.' : '') + ' בדוק את התצוגה למטה לפני שליחה ליועץ, ואז לחץ "ייצוא PDF".');
   $('rows').innerHTML = '<table><tr><th>סעיף</th><th>סימון</th></tr>' + rows.map(([l, v]) => '<tr><td>' + l + '</td><td class="' + (v ? 'yes">כן' : 'no">לא') + '</td></tr>').join('') + '</table>';
   $('dl').disabled = false;
   await preview(outBytes);
